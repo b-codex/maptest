@@ -1,17 +1,20 @@
 import mapboxgl from '!mapbox-gl'; // eslint-disable-line import/no-webpack-loader-syntax
 import React, { useRef, useEffect, useState } from 'react';
+import SideMenu from './sider';
+import { Layout } from 'antd';
+const { Content } = Layout;
 
 mapboxgl.accessToken = 'pk.eyJ1IjoieGNhZ2U3IiwiYSI6ImNsNGlrbTc0bTBmajgzY3BmNHA1NDVwMmYifQ.SrIHjoAhw8wWViQsLfjmUQ';
 
 export default function App() {
   const mapContainer = useRef(null);
   const map = useRef(null);
+  const [mapObject, setMap] = useState();
+  
+  
   const [lng, setLng] = useState(0);
   const [lat, setLat] = useState(0);
   const [zoom, setZoom] = useState(6);
-  const [mapObject, setMap] = useState();
-
-
   
   useEffect(() => {
     navigator.geolocation.getCurrentPosition(function (position) {
@@ -20,7 +23,7 @@ export default function App() {
       // console.log("Longitude is :", position.coords.longitude);
       setLng(position.coords.longitude);
     });
-    
+
     console.log(lat, lng); // eslint-disable-line no-console
 
     const map = new mapboxgl.Map({
@@ -28,12 +31,12 @@ export default function App() {
       style: 'mapbox://styles/mapbox/streets-v11',
       center: [lng, lat],
       zoom: zoom,
-    });
+    },[lat, lng, zoom]);
 
-    
-    
+
+
     map.setCenter([lng, lat]);
-    
+
     setMap(map);
     map.addControl(
       new mapboxgl.GeolocateControl({
@@ -61,12 +64,24 @@ export default function App() {
   });
 
   return (
-    <div>
-      <div className="sidebar">
-        Longitude: {lng} | Latitude: {lat} | Zoom: {zoom}
-      </div>
-      <div ref={mapContainer} className="map-container" />
-    </div>
+
+    <Layout>
+      {/* <Sider>Sider</Sider> */}
+      <SideMenu />
+      <Layout>
+        {/* <Header>Header</Header> */}
+        <Content>
+          <div>
+            <div className="sidebar">
+              Longitude: {lng} | Latitude: {lat} | Zoom: {zoom}
+            </div>
+            <div ref={mapContainer} className="map-container" />
+          </div>
+        </Content>
+        {/* <Footer>Footer</Footer> */}
+      </Layout>
+    </Layout>
+
   );
 }
 
