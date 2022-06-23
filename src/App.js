@@ -1,16 +1,16 @@
 import mapboxgl from '!mapbox-gl'; // eslint-disable-line import/no-webpack-loader-syntax
 
-import { Input, Menu, Space, List } from 'antd';
+import { Input, Collapse, Button, List, Select, Modal, Form } from 'antd';
 
 import React, { useRef, useEffect, useState } from 'react';
 
 import "antd/dist/antd.css";
 import { Layout, Card } from 'antd';
 
-import { items } from './components/menu.items'
-
-const { Content, Sider, Header } = Layout;
+const { Content, Sider } = Layout;
 const { Search } = Input;
+const { Panel } = Collapse;
+const { Option } = Select;
 
 mapboxgl.accessToken = 'pk.eyJ1IjoieGNhZ2U3IiwiYSI6ImNsNGlrbTc0bTBmajgzY3BmNHA1NDVwMmYifQ.SrIHjoAhw8wWViQsLfjmUQ';
 
@@ -27,6 +27,11 @@ export default function App() {
   const [ILat, setILat] = useState(0);
 
   const [locations, setLocations] = useState([]);
+  const [addModalVisible, setAddModalVisible] = useState(false);
+
+  const [form] = Form.useForm();
+
+  var results = []
 
   const onSearch = async (value) => {
 
@@ -38,20 +43,32 @@ export default function App() {
     setLocations(responses.features);
   };
 
-  console.log(locations);
+  const handleChange = (value) => {
+    console.log(`selected ${value}`);
+  };
+
+  const onFinish = (values) => {
+    console.log('Success:', values);
+  };
+
+  const onFinishFailed = (errorInfo) => {
+    console.log('Failed:', errorInfo);
+  };
 
   useEffect(() => {
     // get location from browser geolocation
     // navigator.geolocation.getCurrentPosition(function (position) {
     //   setLat(position.coords.latitude);
     //   setLng(position.coords.longitude);
+    //   setILat(position.coords.latitude);
+    //   setILng(position.coords.longitude);
     // });
 
-    setLat(9.00722)
-    setILat(9.00722)
-    
-    setLng(38.75694);
-    setILng(38.75694);
+    setLat(9.00722);
+    setLng(38.70694);
+
+    setILat(9.00722);
+    setILng(38.70694);
 
     setZoom(11);
 
@@ -93,11 +110,14 @@ export default function App() {
   return (
 
     <Layout>
+
+      {/* top side bar */}
+
       <Sider
         width={300}
         style={{
           overflow: 'auto',
-          height: '100vh',
+          height: '5vh',
           position: 'fixed',
           left: 0,
           backgroundColor: '#fff',
@@ -108,18 +128,211 @@ export default function App() {
           margin: '0px',
         }}
       >
-        <Space>
+        {/* Button to add ads */}
+        <Button
+          width={300}
+          type="primary"
+          onClick={() => setAddModalVisible(true)}
+          style={{
+            height: '4vh',
+            width: '100%',
+            borderRadius: '0px',
+            border: '0px',
+          }}
+        >
+          Add Your Advertisement
+        </Button>
 
-          <Menu items={items} />
-          <Search
-            placeholder="search"
-            allowClear
-            enterButton="Search"
-            size="medium"
-            onSearch={onSearch}
-          />
+        <Modal
+          title="Add Advertisement"
+          centered
+          visible={addModalVisible}
+          onOk={() => setAddModalVisible(false)}
+          onCancel={() => setAddModalVisible(false)}
+          footer={null}
+        >
+          <Form
+            form={form}
+            name="add_ads"
+            labelCol={{ span: 8 }}
+            wrapperCol={{ span: 16 }}
+            initialValues={{ remember: true }}
+            onFinish={onFinish}
+            onFinishFailed={onFinishFailed}
+            autoComplete="off"
+          >
+            <Form.Item
+              label="Latitude"
+              name="lat"
+              rules={[
+                {
+                  required: true,
+                  message: 'Latitude Required',
+                },
+              ]}
+            >
+              <Input />
+            </Form.Item>
 
-        </Space>
+            <Form.Item
+              label="Longitude"
+              name="lng"
+              rules={[
+                {
+                  required: true,
+                  message: 'Longitude Required',
+                },
+              ]}
+            >
+              <Input />
+            </Form.Item>
+
+            <Form.Item
+              label="Sub-city"
+              name="sub_city"
+              rules={[
+                {
+                  required: true,
+                  message: 'Sub-city Required',
+                },
+              ]}
+            >
+              <Select defaultValue="Select One" style={{ width: '100%' }} onChange={handleChange}>
+                <Option value="Addis Ketema">Addis Ketema</Option>
+                <Option value="Akaki Kaliti">Akaki Kaliti</Option>
+                <Option value="Arada">Arada</Option>
+                <Option value="Bole">Bole</Option>
+                <Option value="Gullele">Gullele</Option>
+                <Option value="Kirkos">Kirkos</Option>
+                <Option value="Kolfe Keranio">Kolfe Keranio</Option>
+                <Option value="Lideta">Lideta</Option>
+                <Option value="Nifas Silk Lafto">Nifas Silk Lafto</Option>
+                <Option value="Yeka">Yeka</Option>
+              </Select>
+            </Form.Item>
+
+            <Form.Item
+              label="Price"
+              name="price"
+              rules={[
+                {
+                  required: true,
+                  message: 'Price Required',
+                },
+              ]}
+            >
+              <Input addonAfter="Birr" />
+            </Form.Item>
+
+            <Form.Item
+              label="Surface"
+              name="surface"
+              rules={[
+                {
+                  required: true,
+                  message: 'Surface Required',
+                },
+              ]}
+            >
+              <Input addonAfter="m²" />
+            </Form.Item>
+
+            <Form.Item
+              label="Type"
+              name="type"
+              rules={[
+                {
+                  required: true,
+                  message: 'Type Required',
+                },
+              ]}
+            >
+              <Select defaultValue="Select One" style={{ width: '100%' }} onChange={handleChange}>
+                <Option value="Ground">Ground</Option>
+                <Option value="Building">Building</Option>
+              </Select>
+            </Form.Item>
+
+            <Form.Item
+              label="Duration"
+              name="duration"
+              rules={[
+                {
+                  required: true,
+                  message: 'Duration Required',
+                },
+              ]}
+            >
+              <Input />
+            </Form.Item>
+
+            <Form.Item
+              label="Availability"
+              name="availability"
+              rules={[
+                {
+                  required: true,
+                  message: 'Availability Required',
+                },
+              ]}
+            >
+              <Select defaultValue="Select One" style={{ width: '100%' }} onChange={handleChange}>
+                <Option value="True">True</Option>
+                <Option value="False">False</Option>
+              </Select>
+            </Form.Item>
+
+            <Form.Item
+              label="Occupied"
+              name="occupied"
+              rules={[
+                {
+                  required: true,
+                  message: 'Occupied Required',
+                },
+              ]}
+            >
+              <Select defaultValue="Select One" style={{ width: '100%' }} onChange={handleChange}>
+                <Option value="True">True</Option>
+                <Option value="False">False</Option>
+              </Select>
+            </Form.Item>
+
+            <Form.Item wrapperCol={{ offset: 11, span: 16 }}>
+              <Button type="primary" htmlType="submit">
+                Submit
+              </Button>
+            </Form.Item>
+          </Form>
+        </Modal>
+      </Sider>
+
+      {/* mid side bar */}
+      <Sider
+        width={300}
+        style={{
+          overflow: 'auto',
+          height: '45vh',
+          position: 'fixed',
+          top: '5vh',
+          left: 0,
+          backgroundColor: '#fff',
+          borderRight: '1px solid #e8e8e8',
+          boxShadow: '0 0 10px rgba(0, 0, 0, 0.1)',
+          zIndex: '10',
+          padding: '0px',
+          margin: '0px',
+        }}
+      >
+
+        {/* <Menu items={items} /> */}
+        <Search
+          placeholder="search"
+          allowClear
+          enterButton="Search"
+          size="medium"
+          onSearch={onSearch}
+        />
 
         <List
           size="large"
@@ -147,33 +360,88 @@ export default function App() {
             </List.Item>
           }
         />
-        {/* {
-          locations.map(location => {
-            console.log('location', location)
-            return (
+      </Sider>
 
-              <Card>
-                <p>{location.place_name}</p>
-              </Card>
+      {/* bottom side bar */}
+      <Sider
+        width={300}
+        style={{
+          overflow: 'auto',
+          height: '50vh',
+          position: 'fixed',
+          top: '50vh',
+          left: 0,
+          backgroundColor: '#fff',
+          borderRight: '1px solid #e8e8e8',
+          boxShadow: '0 0 10px rgba(0, 0, 0, 0.1)',
+          zIndex: '10',
+          padding: '0px',
+          margin: '0px',
+        }}
+      >
 
-            )
-          })
-        } */}
-
-
+        <Card
+          title="Filter Options"
+          bordered={false}
+          extra={
+            <Button type="primary" size="small" ghost>
+              Reset
+            </Button>
+          }>
+          <Collapse accordion>
+            <Panel header="Sub-city" key="1">
+              <Select defaultValue="Select One" style={{ width: '100%' }} onChange={handleChange}>
+                <Option value="Addis Ketema">Addis Ketema</Option>
+                <Option value="Akaki Kaliti">Akaki Kaliti</Option>
+                <Option value="Arada">Arada</Option>
+                <Option value="Bole">Bole</Option>
+                <Option value="Gullele">Gullele</Option>
+                <Option value="Kirkos">Kirkos</Option>
+                <Option value="Kolfe Keranio">Kolfe Keranio</Option>
+                <Option value="Lideta">Lideta</Option>
+                <Option value="Nifas Silk Lafto">Nifas Silk Lafto</Option>
+                <Option value="Yeka">Yeka</Option>
+              </Select>
+            </Panel>
+            <Panel header="Price" key="2">
+              <Search onSearch={onSearch} enterButton />
+            </Panel>
+            <Panel header="Surface" key="3">
+              <Search onSearch={onSearch} enterButton />
+            </Panel>
+            <Panel header="Type" key="4">
+              <Select defaultValue="Select One" style={{ width: '100%' }} onChange={handleChange}>
+                <Option value="Ground">Ground</Option>
+                <Option value="Building">Building</Option>
+              </Select>
+            </Panel>
+            <Panel header="Duration" key="5">
+              <Search onSearch={onSearch} enterButton />
+            </Panel>
+            <Panel header="Availability" key="6">
+              <Select defaultValue="Select One" style={{ width: '100%' }} onChange={handleChange}>
+                <Option value="Available">Available</Option>
+                <Option value="Not Available">Not Available</Option>
+              </Select>
+            </Panel>
+          </Collapse>
+        </Card>
 
       </Sider>
 
       <Layout>
-        <Header
+        {/* <Header
           style={{
+            height: '10vh',
             background: '#fff',
             padding: 0,
             margin: '0px',
             borderBottom: '1px solid #e8e8e8',
             boxShadow: '0 0 10px rgba(0, 0, 0, 0.1)',
           }}
-        >Header</Header>
+        >
+          Header
+        </Header> */}
         <Content>
           <div>
             <div className="sidebar">
@@ -184,7 +452,7 @@ export default function App() {
         </Content>
         {/* <Footer>Footer</Footer> */}
       </Layout>
-    </Layout>
+    </Layout >
 
   );
 }
