@@ -1,10 +1,11 @@
 body {
   margin: 0;
+  /* overflow: hidden; */
 }
 
 .map-container {
-  height: 100vh;
-  width: 100vw;
+  height:100vh;
+  width: 100%;
 }
 
 .sidebar {
@@ -14,8 +15,12 @@ body {
   font-family: monospace;
   z-index: 1;
   position: absolute;
-  top: 0;
-  left: 0;
-  margin: 12px;
+  bottom: 0;
+  right: 0;
+  margin: 20px 0px;
   border-radius: 4px;
+}
+
+.clickable{
+  cursor: pointer;
 }
