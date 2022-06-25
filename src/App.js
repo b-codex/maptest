@@ -1,6 +1,6 @@
 import mapboxgl from '!mapbox-gl'; // eslint-disable-line import/no-webpack-loader-syntax
 
-import { Input, Collapse, Button, List, Select, Modal, Form } from 'antd';
+import { Input, Collapse, Button, List, Select, Modal, Form, DatePicker, Slider, InputNumber, Col, Row, Space } from 'antd';
 
 import React, { useRef, useEffect, useState } from 'react';
 
@@ -11,6 +11,7 @@ const { Content, Sider } = Layout;
 const { Search } = Input;
 const { Panel } = Collapse;
 const { Option } = Select;
+const { RangePicker } = DatePicker;
 
 mapboxgl.accessToken = 'pk.eyJ1IjoieGNhZ2U3IiwiYSI6ImNsNGlrbTc0bTBmajgzY3BmNHA1NDVwMmYifQ.SrIHjoAhw8wWViQsLfjmUQ';
 
@@ -26,12 +27,63 @@ export default function App() {
   const [ILng, setILng] = useState(0);
   const [ILat, setILat] = useState(0);
 
+  const [clickedLat, setClickedLat] = useState(0);
+  const [clickedLng, setClickedLng] = useState(0);
+
   const [locations, setLocations] = useState([]);
   const [addModalVisible, setAddModalVisible] = useState(false);
 
   const [form] = Form.useForm();
 
   var results = []
+  const [isDateDisabled, setIsDateDisabled] = useState(true);
+  const [priceMin, setPriceMin] = useState(1000);
+  const [priceMax, setPriceMax] = useState(10000);
+
+  const handlePriceMin = (value) => {
+    setPriceMin(value);
+  }
+
+  const handlePriceMax = (value) => {
+    setPriceMax(value);
+  }
+
+  const handlePriceSlider = (value) => {
+    setPriceMin(value[0]);
+    setPriceMax(value[1]);
+  }
+
+  const [surfaceMin, setSurfaceMin] = useState(1);
+  const [surfaceMax, setSurfaceMax] = useState(1000);
+
+  const handleSurfaceMin = (value) => {
+    setSurfaceMin(value);
+  }
+
+  const handleSurfaceMax = (value) => {
+    setSurfaceMax(value);
+  }
+
+  const handleSurfaceSlider = (value) => {
+    setSurfaceMin(value[0]);
+    setSurfaceMax(value[1]);
+  }
+
+  const [durationMin, setDurationMin] = useState(1);
+  const [durationMax, setDurationMax] = useState(100);
+
+  const handleDurationMin = (value) => {
+    setDurationMin(value);
+  }
+
+  const handleDurationMax = (value) => {
+    setDurationMax(value);
+  }
+
+  const handleDurationSlider = (value) => {
+    setDurationMin(value[0]);
+    setDurationMax(value[1]);
+  }
 
   const onSearch = async (value) => {
 
@@ -45,6 +97,16 @@ export default function App() {
 
   const handleChange = (value) => {
     console.log(`selected ${value}`);
+  };
+
+  const handleAvailability = (value) => {
+    if (value === "Occupied") {
+      setIsDateDisabled(true);
+    }
+    else {
+      setIsDateDisabled(false);
+    }
+
   };
 
   const onFinish = (values) => {
@@ -93,14 +155,36 @@ export default function App() {
       })
     );
 
+    // add marker to get custom location selected by the user
+    map.on('click', function (e) {
+      // new mapboxgl.Marker({ draggable: true, })
+      //   .setLngLat(e.lngLat)
+      //   .addTo(map);
+      setClickedLng(e.lngLat.lng.toFixed(5));
+      setClickedLat(e.lngLat.lat.toFixed(5));
+    });
+
     // adding markers
     locations.map(location => {
       var xLng = location.center[0];
       var xLat = location.center[1];
+      // console.log(location);
       // console.log(xLat, xLng);
+
+      // a popup will show with information about the marker
+      var popup = new mapboxgl.Popup({ offset: 25, closeOnClick: true, closeButton: false })
+        .setHTML(
+          '<h3>' + location.place_name + '</h3>' +
+          '<p>' + location.center[0] + ',' + location.center[1] + '</p>'
+          // '<p>' + location.properties.address + '</p>' 
+        );
+
+      // create the marker
       new mapboxgl.Marker()
         .setLngLat([xLng, xLat])
+        .setPopup(popup)
         .addTo(map);
+
     });
 
     // set map object
@@ -247,7 +331,7 @@ export default function App() {
                 },
               ]}
             >
-              <Select defaultValue="Select One" style={{ width: '100%' }} onChange={handleChange}>
+              <Select initialValues="Select One" style={{ width: '100%' }} onChange={handleChange}>
                 <Option value="Ground">Ground</Option>
                 <Option value="Building">Building</Option>
               </Select>
@@ -263,7 +347,7 @@ export default function App() {
                 },
               ]}
             >
-              <Input />
+              <Input addonAfter="Days" />
             </Form.Item>
 
             <Form.Item
@@ -276,26 +360,23 @@ export default function App() {
                 },
               ]}
             >
-              <Select defaultValue="Select One" style={{ width: '100%' }} onChange={handleChange}>
-                <Option value="True">True</Option>
-                <Option value="False">False</Option>
+              <Select initialValues="Select One" style={{ width: '100%' }} onChange={handleAvailability}>
+                <Option value="Occupied">Occupied</Option>
+                <Option value="Unoccupied">Unoccupied</Option>
               </Select>
             </Form.Item>
 
             <Form.Item
-              label="Occupied"
-              name="occupied"
+              label="Date"
+              name="date"
               rules={[
                 {
                   required: true,
-                  message: 'Occupied Required',
+                  message: 'Date Required',
                 },
               ]}
             >
-              <Select defaultValue="Select One" style={{ width: '100%' }} onChange={handleChange}>
-                <Option value="True">True</Option>
-                <Option value="False">False</Option>
-              </Select>
+              <RangePicker disabled={isDateDisabled} />
             </Form.Item>
 
             <Form.Item wrapperCol={{ offset: 11, span: 16 }}>
@@ -312,7 +393,7 @@ export default function App() {
         width={300}
         style={{
           overflow: 'auto',
-          height: '45vh',
+          height: '35vh',
           position: 'fixed',
           top: '5vh',
           left: 0,
@@ -327,9 +408,9 @@ export default function App() {
 
         {/* <Menu items={items} /> */}
         <Search
-          placeholder="search"
+          placeholder="Search"
           allowClear
-          enterButton="Search"
+          enterButton
           size="medium"
           onSearch={onSearch}
         />
@@ -367,9 +448,9 @@ export default function App() {
         width={300}
         style={{
           overflow: 'auto',
-          height: '50vh',
+          height: '56.5vh',
           position: 'fixed',
-          top: '50vh',
+          top: '40vh',
           left: 0,
           backgroundColor: '#fff',
           borderRight: '1px solid #e8e8e8',
@@ -379,7 +460,6 @@ export default function App() {
           margin: '0px',
         }}
       >
-
         <Card
           title="Filter Options"
           bordered={false}
@@ -389,6 +469,7 @@ export default function App() {
             </Button>
           }>
           <Collapse accordion>
+
             <Panel header="Sub-city" key="1">
               <Select defaultValue="Select One" style={{ width: '100%' }} onChange={handleChange}>
                 <Option value="Addis Ketema">Addis Ketema</Option>
@@ -403,30 +484,111 @@ export default function App() {
                 <Option value="Yeka">Yeka</Option>
               </Select>
             </Panel>
+
             <Panel header="Price" key="2">
-              <Search onSearch={onSearch} enterButton />
+              <Input.Group >
+                <Row>
+                  {/* <Space direction='horizontal'> */}
+                  <Col span={12}>
+                    <InputNumber placeholder="Min" name='priceMin' value={priceMin} onChange={handlePriceMin} addonAfter="Birr" />
+                  </Col>
+                  <Col span={12}>
+                    <InputNumber placeholder="Max" name='priceMax' value={priceMax} onChange={handlePriceMax} addonAfter="Birr" />
+                  </Col>
+                  {/* </Space> */}
+                </Row>
+              </Input.Group>
+              <Slider
+                range={{ draggableTrack: true }}
+                defaultValue={[priceMin, priceMax]}
+                min={1}
+                max={10000}
+                onChange={handlePriceSlider}
+              />
             </Panel>
+
             <Panel header="Surface" key="3">
-              <Search onSearch={onSearch} enterButton />
+              <Input.Group >
+                <Row>
+                  {/* <Space direction='horizontal'> */}
+                  <Col span={12}>
+                    <InputNumber placeholder="Min" name='surfaceMin' value={surfaceMin} onChange={handleSurfaceMin} addonAfter="m²" />
+                  </Col>
+                  <Col span={12}>
+                    <InputNumber placeholder="Max" name='surfaceMax' value={surfaceMax} onChange={handleSurfaceMax} addonAfter="m²" />
+                  </Col>
+                  {/* </Space> */}
+                </Row>
+              </Input.Group>
+              <Slider
+                range={{ draggableTrack: true }}
+                defaultValue={[surfaceMin, surfaceMax]}
+                min={1}
+                max={1000}
+                onChange={handleSurfaceSlider}
+              />
             </Panel>
+
             <Panel header="Type" key="4">
               <Select defaultValue="Select One" style={{ width: '100%' }} onChange={handleChange}>
                 <Option value="Ground">Ground</Option>
                 <Option value="Building">Building</Option>
               </Select>
             </Panel>
+
             <Panel header="Duration" key="5">
-              <Search onSearch={onSearch} enterButton />
+              <Input.Group >
+                <Row>
+                  {/* <Space direction='horizontal'> */}
+                  <Col span={12}>
+                    <InputNumber placeholder="Min" name='durationMin' value={durationMin} onChange={handleDurationMin} addonAfter="m²" />
+                  </Col>
+                  <Col span={12}>
+                    <InputNumber placeholder="Max" name='durationMax' value={durationMax} onChange={handleDurationMax} addonAfter="m²" />
+                  </Col>
+                  {/* </Space> */}
+                </Row>
+              </Input.Group>
+              <Slider
+                range={{ draggableTrack: true }}
+                defaultValue={[durationMin, durationMax]}
+                min={1}
+                max={100}
+                onChange={handleDurationSlider}
+              />
             </Panel>
+
             <Panel header="Availability" key="6">
               <Select defaultValue="Select One" style={{ width: '100%' }} onChange={handleChange}>
-                <Option value="Available">Available</Option>
-                <Option value="Not Available">Not Available</Option>
+                <Option value="Occupied">Occupied</Option>
+                <Option value="Unoccupied">Unoccupied</Option>
               </Select>
             </Panel>
+
           </Collapse>
         </Card>
 
+
+      </Sider>
+
+      {/* map clicked location */}
+      <Sider
+        width={300}
+        style={{
+          overflow: 'auto',
+          height: '3.5vh',
+          position: 'fixed',
+          top: '96.5vh',
+          left: 0,
+          backgroundColor: '#fff',
+          borderRight: '1px solid #e8e8e8',
+          boxShadow: '0 0 10px rgba(0, 0, 0, 0.1)',
+          zIndex: '10',
+          padding: '0px',
+          margin: '0px',
+        }}
+      >
+        <Input value={`Lng: ${clickedLng}, Lat: ${clickedLat}`} contentEditable={false}/>
       </Sider>
 
       <Layout>
