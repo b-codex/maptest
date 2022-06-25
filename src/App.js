@@ -22,8 +22,6 @@ export default function App() {
 
   const log = console.log;
 
-  const [ads, setAds] = useState([]);
-
   const mapContainer = useRef(null);
   // const map = useRef(null);
   const [mapObject, setMap] = useState();
@@ -43,8 +41,6 @@ export default function App() {
 
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
-
-  var results = []
 
   const [isDateDisabled, setIsDateDisabled] = useState(true);
   const [priceMin, setPriceMin] = useState(1000);
@@ -119,7 +115,7 @@ export default function App() {
     // log(responses);
     // setLocations(responses.features);
 
-    if (responses.length == 0) {
+    if (responses.length === 0) {
       setLoading(false);
       info();
       setLocations([]);
@@ -130,17 +126,13 @@ export default function App() {
     }
   };
 
-  const handleChange = (value) => {
-    console.log(`selected ${value}`);
-  };
-
   const handleAvailability = (value) => {
-    if (value === "Occupied") {
-      setIsDateDisabled(false);
-    }
-    else {
-      setIsDateDisabled(true);
-    }
+    // if (value === "Occupied") {
+    setIsDateDisabled(false);
+    // }
+    // else {
+    //   setIsDateDisabled(true);
+    // }
 
   };
 
@@ -156,12 +148,16 @@ export default function App() {
     message.error('Something went wrong. Please Try Again.');
   };
 
+  const formFailed = () => {
+    message.error('Please Make Sure All Fields Are Filled');
+  };
+
   const onFinish = async (values) => {
     setLoading(true);
     // console.log('Success:', values.date[0]['_d']);
     const latitude = values.lat;
     const longitude = values.lng;
-    const sub_city = values.sub_city;
+    const sub_city = values.sub_city.toLowerCase();
     const price = values.price;
     const surface = values.surface;
     const type = values.type;
@@ -185,11 +181,36 @@ export default function App() {
 
   const onFinishFailed = (errorInfo) => {
     console.log('Failed:', errorInfo);
+    formFailed();
   };
 
+  useEffect(async () => {
+    let x = [];
+    // onSnapshot(housesCollection, (snapshot) => {
+    //   snapshot.docs.forEach(doc => {
+    //     // setAds({ ...doc.data(), id: doc.id });
+    //     x.push({ ...doc.data(), id: doc.id });
+    //   }
+    //   );
+    // })
+
+    const responses = await getDocs(housesCollection).then(data => {
+      let houses = [];
+      data.docs.forEach(doc => {
+        houses.push({ ...doc.data(), id: doc.id });
+      }
+      );
+      return houses;
+    }
+    ).catch(err => {
+      log(err);
+    }
+    );
+
+    setLocations(responses);
+  }, []);
 
   useEffect(() => {
-    // let temp = []
     // get location from browser geolocation
     // navigator.geolocation.getCurrentPosition(function (position) {
     //   setLat(position.coords.latitude);
@@ -197,19 +218,6 @@ export default function App() {
     //   setILat(position.coords.latitude);
     //   setILng(position.coords.longitude);
     // });
-
-    // real time listener for data
-    // onSnapshot(housesCollection, (snapshot) => {
-    //   snapshot.docs.forEach(doc => {
-    //     // setAds({ ...doc.data(), id: doc.id });
-    //     temp.push({ ...doc.data(), id: doc.id });
-    //   }
-    //   );
-    //   // return ads;
-    //   // setAds(temp);
-    // })
-
-    // log(temp);
 
     setLat(9.00722);
     setLng(38.70694);
@@ -272,8 +280,6 @@ export default function App() {
 
     // });
 
-    log(locations);
-
     locations.map(location => {
       var xLng = location.longitude;
       var xLat = location.latitude;
@@ -283,17 +289,25 @@ export default function App() {
       // a popup will show with information about the marker
       var popup = new mapboxgl.Popup({ offset: 25, closeOnClick: true, closeButton: false })
         .setHTML(
-          '<p> Sub-city: ' + location.sub_city + '</p>' +
+          '<p> Sub-city: ' + location.sub_city[0].toUpperCase() + location.sub_city.substring(1) + '</p>' +
           '<p> Price: ' + location.price + ' Birr</p>' +
           '<p> Surface: ' + location.surface + ' m²</p>' +
-          '<p> Type: ' + location.type + '</p>' +
+          '<p> Type: ' + location.type[0].toUpperCase() + location.type.substring(1) + '</p>' +
           '<p> Duration: ' + location.duration + ' Days</p>' +
-          '<p> Availability: ' + location.availability + '</p>'
+          '<p> Availability: ' + location.availability[0].toUpperCase() + location.availability.substring(1) + '</p>'
           // '<p>' + location.properties.address + '</p>' 
         );
 
+      let color = '';
+      if (location.availability === "occupied") {
+        color = '#ff0000'; //red
+      }
+      if (location.availability === "unoccupied") {
+        color = '#00ff00'; //green
+      }
+
       // create the marker
-      new mapboxgl.Marker()
+      new mapboxgl.Marker({ color: color })
         .setLngLat([xLng, xLat])
         .setPopup(popup)
         .addTo(map);
@@ -309,7 +323,6 @@ export default function App() {
     <Layout>
 
       {/* top side bar */}
-
       <Sider
         width={300}
         style={{
@@ -394,7 +407,7 @@ export default function App() {
                 },
               ]}
             >
-              <Select defaultValue="Select One" style={{ width: '100%' }} onChange={handleChange}>
+              <Select defaultValue="Select One" style={{ width: '100%' }} >
                 <Option value="Addis Ketema">Addis Ketema</Option>
                 <Option value="Akaki Kaliti">Akaki Kaliti</Option>
                 <Option value="Arada">Arada</Option>
@@ -444,9 +457,9 @@ export default function App() {
                 },
               ]}
             >
-              <Select initialValues="Select One" style={{ width: '100%' }} onChange={handleChange}>
-                <Option value="Ground">Ground</Option>
-                <Option value="Building">Building</Option>
+              <Select initialValues="Select One" style={{ width: '100%' }} >
+                <Option value="ground">Ground</Option>
+                <Option value="building">Building</Option>
               </Select>
             </Form.Item>
 
@@ -474,8 +487,8 @@ export default function App() {
               ]}
             >
               <Select initialValues="Select One" style={{ width: '100%' }} onChange={handleAvailability}>
-                <Option value="Occupied">Occupied</Option>
-                <Option value="Unoccupied">Unoccupied</Option>
+                <Option value="occupied">Occupied</Option>
+                <Option value="unoccupied">Unoccupied</Option>
               </Select>
             </Form.Item>
 
@@ -588,7 +601,7 @@ export default function App() {
           <Collapse accordion>
 
             <Panel header="Sub-city" key="1">
-              <Select defaultValue="Select One" style={{ width: '100%' }} onChange={handleChange}>
+              <Select defaultValue="Select One" style={{ width: '100%' }} >
                 <Option value="Addis Ketema">Addis Ketema</Option>
                 <Option value="Akaki Kaliti">Akaki Kaliti</Option>
                 <Option value="Arada">Arada</Option>
@@ -647,7 +660,7 @@ export default function App() {
             </Panel>
 
             <Panel header="Type" key="4">
-              <Select defaultValue="Select One" style={{ width: '100%' }} onChange={handleChange}>
+              <Select defaultValue="Select One" style={{ width: '100%' }} >
                 <Option value="Ground">Ground</Option>
                 <Option value="Building">Building</Option>
               </Select>
@@ -676,7 +689,7 @@ export default function App() {
             </Panel>
 
             <Panel header="Availability" key="6">
-              <Select defaultValue="Select One" style={{ width: '100%' }} onChange={handleChange}>
+              <Select defaultValue="Select One" style={{ width: '100%' }} >
                 <Option value="Occupied">Occupied</Option>
                 <Option value="Unoccupied">Unoccupied</Option>
               </Select>
