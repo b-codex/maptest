@@ -30,9 +30,6 @@ export default function App() {
   const [lat, setLat] = useState(0);
   const [zoom, setZoom] = useState(0);
 
-  const [ILng, setILng] = useState(0);
-  const [ILat, setILat] = useState(0);
-
   const [clickedLat, setClickedLat] = useState(0);
   const [clickedLng, setClickedLng] = useState(0);
 
@@ -91,6 +88,13 @@ export default function App() {
     setDurationMax(value[1]);
   }
 
+  const onSearchChange = (value) => {
+    // log(value.nativeEvent.data);
+    // if (value.nativeEvent.data === null) {
+    //   setLocations(temp);
+    // }
+  }
+
   const onSearch = async (value) => {
 
     // const responses = await fetch('https://api.mapbox.com/geocoding/v5/mapbox.places/' + value + '.json?access_token=pk.eyJ1IjoieGNhZ2U3IiwiYSI6ImNsNGlrbTc0bTBmajgzY3BmNHA1NDVwMmYifQ.SrIHjoAhw8wWViQsLfjmUQ')
@@ -112,8 +116,6 @@ export default function App() {
       log(err);
     }
     );
-    // log(responses);
-    // setLocations(responses.features);
 
     if (responses.length === 0) {
       setLoading(false);
@@ -219,14 +221,10 @@ export default function App() {
     //   setLat(position.coords.latitude);
     //   setLng(position.coords.longitude);
     //   setILat(position.coords.latitude);
-    //   setILng(position.coords.longitude);
     // });
 
     setLat(9.00722);
     setLng(38.70694);
-
-    setILat(9.00722);
-    setILng(38.70694);
 
     setZoom(10);
 
@@ -325,7 +323,7 @@ export default function App() {
 
     <Layout>
 
-      {/* top side bar */}
+      {/* add */}
       <Sider
         width={300}
         style={{
@@ -347,7 +345,7 @@ export default function App() {
           type="primary"
           onClick={() => setAddModalVisible(true)}
           style={{
-            height: '4vh',
+            height: '4.97vh',
             width: '100%',
             borderRadius: '0px',
             border: '0px',
@@ -410,7 +408,7 @@ export default function App() {
                 },
               ]}
             >
-              <Select defaultValue="Select One" style={{ width: '100%' }} >
+              <Select style={{ width: '100%' }} >
                 <Option value="Addis Ketema">Addis Ketema</Option>
                 <Option value="Akaki Kaliti">Akaki Kaliti</Option>
                 <Option value="Arada">Arada</Option>
@@ -460,7 +458,7 @@ export default function App() {
                 },
               ]}
             >
-              <Select initialValues="Select One" style={{ width: '100%' }} >
+              <Select style={{ width: '100%' }} >
                 <Option value="ground">Ground</Option>
                 <Option value="building">Building</Option>
               </Select>
@@ -489,7 +487,7 @@ export default function App() {
                 },
               ]}
             >
-              <Select initialValues="Select One" style={{ width: '100%' }} onChange={handleAvailability}>
+              <Select style={{ width: '100%' }} onChange={handleAvailability}>
                 <Option value="occupied">Occupied</Option>
                 <Option value="unoccupied">Unoccupied</Option>
               </Select>
@@ -508,6 +506,7 @@ export default function App() {
               <RangePicker
                 disabled={isDateDisabled}
                 format="YYYY-MM-DD"
+                style={{ width: '100%' }}
               />
             </Form.Item>
 
@@ -516,16 +515,17 @@ export default function App() {
                 Submit
               </Button>
             </Form.Item>
+
           </Form>
         </Modal>
       </Sider>
 
-      {/* mid side bar */}
+      {/* search */}
       <Sider
         width={300}
         style={{
           overflow: 'auto',
-          height: '35vh',
+          height: '50vh',
           position: 'fixed',
           top: '5vh',
           left: 0,
@@ -541,9 +541,10 @@ export default function App() {
         {/* <Menu items={items} /> */}
         <Search
           placeholder="Search"
-          // allowClear
+          allowClear
           enterButton
           size="medium"
+          onChange={onSearchChange}
           onSearch={onSearch}
           loading={loading}
         />
@@ -566,9 +567,6 @@ export default function App() {
                     return t;
                   }
                 });
-
-                setILng(location.longitude);
-                setILat(location.latitude);
               }}
             >{location.sub_city[0].toUpperCase() + location.sub_city.substring(1) + ' Sub-city' + ' (' + location.latitude + ', ' + location.longitude + ' )'}
             </List.Item>
@@ -576,14 +574,14 @@ export default function App() {
         />
       </Sider>
 
-      {/* bottom side bar */}
+      {/* filters */}
       <Sider
         width={300}
         style={{
           overflow: 'auto',
-          height: '60vh',
+          height: '45vh',
           position: 'fixed',
-          top: '40vh',
+          top: '55vh',
           left: 0,
           backgroundColor: '#fff',
           borderRight: '1px solid #e8e8e8',
@@ -604,7 +602,7 @@ export default function App() {
           <Collapse accordion>
 
             <Panel header="Sub-city" key="1">
-              <Select defaultValue="Select One" style={{ width: '100%' }} >
+              <Select style={{ width: '100%' }} >
                 <Option value="Addis Ketema">Addis Ketema</Option>
                 <Option value="Akaki Kaliti">Akaki Kaliti</Option>
                 <Option value="Arada">Arada</Option>
@@ -663,7 +661,7 @@ export default function App() {
             </Panel>
 
             <Panel header="Type" key="4">
-              <Select defaultValue="Select One" style={{ width: '100%' }} >
+              <Select style={{ width: '100%' }} >
                 <Option value="Ground">Ground</Option>
                 <Option value="Building">Building</Option>
               </Select>
@@ -692,7 +690,7 @@ export default function App() {
             </Panel>
 
             <Panel header="Availability" key="6">
-              <Select defaultValue="Select One" style={{ width: '100%' }} >
+              <Select style={{ width: '100%' }} >
                 <Option value="Occupied">Occupied</Option>
                 <Option value="Unoccupied">Unoccupied</Option>
               </Select>
