@@ -7,7 +7,8 @@ import React, { useRef, useEffect, useState } from 'react';
 import "antd/dist/antd.css";
 import { Layout, Card } from 'antd';
 
-import { addADS } from './firebase/firebase_functions';
+import { getDocs, onSnapshot, query, where } from 'firebase/firestore';
+import { addADS, housesCollection } from './firebase/firebase_functions';
 
 const { Content, Sider } = Layout;
 const { Search } = Input;
@@ -18,6 +19,11 @@ const { RangePicker } = DatePicker;
 mapboxgl.accessToken = 'pk.eyJ1IjoieGNhZ2U3IiwiYSI6ImNsNGlrbTc0bTBmajgzY3BmNHA1NDVwMmYifQ.SrIHjoAhw8wWViQsLfjmUQ';
 
 export default function App() {
+
+  const log = console.log;
+
+  const [ads, setAds] = useState([]);
+
   const mapContainer = useRef(null);
   // const map = useRef(null);
   const [mapObject, setMap] = useState();
@@ -39,7 +45,6 @@ export default function App() {
   const [loading, setLoading] = useState(false);
 
   var results = []
-  const log = console.log;
 
   const [isDateDisabled, setIsDateDisabled] = useState(true);
   const [priceMin, setPriceMin] = useState(1000);
@@ -92,12 +97,37 @@ export default function App() {
 
   const onSearch = async (value) => {
 
-    const responses = await fetch('https://api.mapbox.com/geocoding/v5/mapbox.places/' + value + '.json?access_token=pk.eyJ1IjoieGNhZ2U3IiwiYSI6ImNsNGlrbTc0bTBmajgzY3BmNHA1NDVwMmYifQ.SrIHjoAhw8wWViQsLfjmUQ')
-      .then(response => {
-        return response.json();
-      })
+    // const responses = await fetch('https://api.mapbox.com/geocoding/v5/mapbox.places/' + value + '.json?access_token=pk.eyJ1IjoieGNhZ2U3IiwiYSI6ImNsNGlrbTc0bTBmajgzY3BmNHA1NDVwMmYifQ.SrIHjoAhw8wWViQsLfjmUQ')
+    //   .then(response => {
+    //     return response.json();
+    //   })
+    setLoading(true);
+    // get data from collection
+    const q = query(housesCollection, where('sub_city', '==', value.toLowerCase()));
+    const responses = await getDocs(q).then(data => {
+      let houses = [];
+      data.docs.forEach(doc => {
+        houses.push({ ...doc.data(), id: doc.id });
+      }
+      );
+      return houses;
+    }
+    ).catch(err => {
+      log(err);
+    }
+    );
+    // log(responses);
+    // setLocations(responses.features);
 
-    setLocations(responses.features);
+    if (responses.length == 0) {
+      setLoading(false);
+      info();
+      setLocations([]);
+    }
+    else {
+      setLocations(responses);
+      setLoading(false);
+    }
   };
 
   const handleChange = (value) => {
@@ -116,6 +146,10 @@ export default function App() {
 
   const success = () => {
     message.success('Advertisement added successfully');
+  };
+
+  const info = () => {
+    message.info('No advertisements found');
   };
 
   const error = () => {
@@ -153,7 +187,9 @@ export default function App() {
     console.log('Failed:', errorInfo);
   };
 
+
   useEffect(() => {
+    // let temp = []
     // get location from browser geolocation
     // navigator.geolocation.getCurrentPosition(function (position) {
     //   setLat(position.coords.latitude);
@@ -162,13 +198,26 @@ export default function App() {
     //   setILng(position.coords.longitude);
     // });
 
+    // real time listener for data
+    // onSnapshot(housesCollection, (snapshot) => {
+    //   snapshot.docs.forEach(doc => {
+    //     // setAds({ ...doc.data(), id: doc.id });
+    //     temp.push({ ...doc.data(), id: doc.id });
+    //   }
+    //   );
+    //   // return ads;
+    //   // setAds(temp);
+    // })
+
+    // log(temp);
+
     setLat(9.00722);
     setLng(38.70694);
 
     setILat(9.00722);
     setILng(38.70694);
 
-    setZoom(11);
+    setZoom(10);
 
     // init the map object
     const map = new mapboxgl.Map({
@@ -200,18 +249,46 @@ export default function App() {
       setClickedLat(e.lngLat.lat.toFixed(5));
     });
 
-    // adding markers
+    // // adding markers
+    // locations.map(location => {
+    //   var xLng = location.center[0];
+    //   var xLat = location.center[1];
+    //   // console.log(location);
+    //   // console.log(xLat, xLng);
+
+    //   // a popup will show with information about the marker
+    //   var popup = new mapboxgl.Popup({ offset: 25, closeOnClick: true, closeButton: false })
+    //     .setHTML(
+    //       '<h3>' + location.place_name + '</h3>' +
+    //       '<p>' + location.center[0] + ',' + location.center[1] + '</p>'
+    //       // '<p>' + location.properties.address + '</p>' 
+    //     );
+
+    //   // create the marker
+    //   new mapboxgl.Marker()
+    //     .setLngLat([xLng, xLat])
+    //     .setPopup(popup)
+    //     .addTo(map);
+
+    // });
+
+    log(locations);
+
     locations.map(location => {
-      var xLng = location.center[0];
-      var xLat = location.center[1];
+      var xLng = location.longitude;
+      var xLat = location.latitude;
       // console.log(location);
       // console.log(xLat, xLng);
 
       // a popup will show with information about the marker
       var popup = new mapboxgl.Popup({ offset: 25, closeOnClick: true, closeButton: false })
         .setHTML(
-          '<h3>' + location.place_name + '</h3>' +
-          '<p>' + location.center[0] + ',' + location.center[1] + '</p>'
+          '<p> Sub-city: ' + location.sub_city + '</p>' +
+          '<p> Price: ' + location.price + ' Birr</p>' +
+          '<p> Surface: ' + location.surface + ' m²</p>' +
+          '<p> Type: ' + location.type + '</p>' +
+          '<p> Duration: ' + location.duration + ' Days</p>' +
+          '<p> Availability: ' + location.availability + '</p>'
           // '<p>' + location.properties.address + '</p>' 
         );
 
@@ -448,23 +525,24 @@ export default function App() {
         {/* <Menu items={items} /> */}
         <Search
           placeholder="Search"
-          allowClear
+          // allowClear
           enterButton
           size="medium"
           onSearch={onSearch}
+          loading={loading}
         />
 
         <List
-          size="large"
+          size="medium"
           dataSource={locations}
-          renderItem={item =>
+          renderItem={location =>
             <List.Item
               className='clickable'
               onClick={() => {
 
                 // go to the location
                 mapObject.flyTo({
-                  center: [item.center[0], item.center[1]],
+                  center: [location.longitude, location.latitude],
                   zoom: 15,
                   speed: 3,
                   curve: 1,
@@ -473,10 +551,10 @@ export default function App() {
                   }
                 });
 
-                setILng(item.center[0]);
-                setILat(item.center[1]);
+                setILng(location.longitude);
+                setILat(location.latitude);
               }}
-            >{item.place_name}
+            >{location.sub_city[0].toUpperCase() + location.sub_city.substring(1) + ' Sub-city' + ' (' + location.latitude + ', ' + location.longitude + ' )'}
             </List.Item>
           }
         />

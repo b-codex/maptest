@@ -7,16 +7,16 @@ import { firebaseConfig } from "./config";
 import {
     getFirestore,
     collection,
-    getDocs,
+    // getDocs,
     addDoc,
-    deleteDoc,
-    doc,
-    onSnapshot,
-    query,
-    where,
+    // deleteDoc,
+    // doc,
+    // onSnapshot,
+    // query,
+    // where,
     serverTimestamp,
-    orderBy,
-    
+    // orderBy,
+
 } from "firebase/firestore";
 
 /* Initializing the firebase app. */
@@ -29,7 +29,7 @@ const log = console.log;
 const db = getFirestore();
 
 // get a reference to a specific collection
-const houses = collection(db, "houses");
+const housesCollection = collection(db, "houses");
 
 const addADS = async (
     lat,
@@ -43,7 +43,7 @@ const addADS = async (
     startDate,
     endDate,
 ) => {
-    await addDoc(houses, {
+    await addDoc(housesCollection, {
         latitude: lat,
         longitude: lng,
         sub_city: sub_city,
@@ -56,7 +56,7 @@ const addADS = async (
         endDate: endDate,
         createdAt: serverTimestamp(),
     }).then(() => {
-        log("Document successfully written!");
+        // log("Document successfully written!");
         return true;
     }
     ).catch(err => {
@@ -66,6 +66,4 @@ const addADS = async (
     );
 };
 
-// module.exports = { addADS };
-
-export { addADS };
+export { addADS, housesCollection };
