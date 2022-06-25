@@ -184,8 +184,8 @@ export default function App() {
     formFailed();
   };
 
-  useEffect(async () => {
-    let x = [];
+  // get data when the page loads
+  useEffect(() => {
     // onSnapshot(housesCollection, (snapshot) => {
     //   snapshot.docs.forEach(doc => {
     //     // setAds({ ...doc.data(), id: doc.id });
@@ -194,20 +194,23 @@ export default function App() {
     //   );
     // })
 
-    const responses = await getDocs(housesCollection).then(data => {
-      let houses = [];
-      data.docs.forEach(doc => {
-        houses.push({ ...doc.data(), id: doc.id });
+    async function getData() {
+      const responses = await getDocs(housesCollection).then(data => {
+        let houses = [];
+        data.docs.forEach(doc => {
+          houses.push({ ...doc.data(), id: doc.id });
+        }
+        );
+        return houses;
+      }
+      ).catch(err => {
+        log(err);
       }
       );
-      return houses;
+      setLocations(responses);
+      return responses;
     }
-    ).catch(err => {
-      log(err);
-    }
-    );
-
-    setLocations(responses);
+    getData();
   }, []);
 
   useEffect(() => {
@@ -578,7 +581,7 @@ export default function App() {
         width={300}
         style={{
           overflow: 'auto',
-          height: '56.5vh',
+          height: '60vh',
           position: 'fixed',
           top: '40vh',
           left: 0,
@@ -702,7 +705,7 @@ export default function App() {
       </Sider>
 
       {/* map clicked location */}
-      <Sider
+      {/* <Sider
         width={300}
         style={{
           overflow: 'auto',
@@ -719,7 +722,7 @@ export default function App() {
         }}
       >
         <Input value={`Lng: ${clickedLng}, Lat: ${clickedLat}`} contentEditable={false} />
-      </Sider>
+      </Sider> */}
 
       <Layout>
         {/* <Header
@@ -734,10 +737,11 @@ export default function App() {
         >
           Header
         </Header> */}
+
         <Content>
           <div>
             <div className="sidebar">
-              Lon: {ILng} | Lat: {ILat}
+              Clicked Lat: {clickedLat} | Clicked Lng: {clickedLng}
             </div>
             <div ref={mapContainer} className="map-container" />
           </div>
