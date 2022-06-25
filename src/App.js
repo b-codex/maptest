@@ -1,11 +1,13 @@
 import mapboxgl from '!mapbox-gl'; // eslint-disable-line import/no-webpack-loader-syntax
 
-import { Input, Collapse, Button, List, Select, Modal, Form, DatePicker, Slider, InputNumber, Col, Row, Space } from 'antd';
+import { Input, Collapse, Button, List, Select, Modal, Form, DatePicker, Slider, InputNumber, Col, Row, message } from 'antd';
 
 import React, { useRef, useEffect, useState } from 'react';
 
 import "antd/dist/antd.css";
 import { Layout, Card } from 'antd';
+
+import { addADS } from './firebase/firebase_functions';
 
 const { Content, Sider } = Layout;
 const { Search } = Input;
@@ -34,8 +36,11 @@ export default function App() {
   const [addModalVisible, setAddModalVisible] = useState(false);
 
   const [form] = Form.useForm();
+  const [loading, setLoading] = useState(false);
 
   var results = []
+  const log = console.log;
+
   const [isDateDisabled, setIsDateDisabled] = useState(true);
   const [priceMin, setPriceMin] = useState(1000);
   const [priceMax, setPriceMax] = useState(10000);
@@ -101,16 +106,47 @@ export default function App() {
 
   const handleAvailability = (value) => {
     if (value === "Occupied") {
-      setIsDateDisabled(true);
+      setIsDateDisabled(false);
     }
     else {
-      setIsDateDisabled(false);
+      setIsDateDisabled(true);
     }
 
   };
 
-  const onFinish = (values) => {
-    console.log('Success:', values);
+  const success = () => {
+    message.success('Advertisement added successfully');
+  };
+
+  const error = () => {
+    message.error('Something went wrong. Please Try Again.');
+  };
+
+  const onFinish = async (values) => {
+    setLoading(true);
+    // console.log('Success:', values.date[0]['_d']);
+    const latitude = values.lat;
+    const longitude = values.lng;
+    const sub_city = values.sub_city;
+    const price = values.price;
+    const surface = values.surface;
+    const type = values.type;
+    const duration = values.duration;
+    const availability = values.availability;
+    const startDate = values.date[0]['_d'];
+    const endDate = values.date[1]['_d'];
+    const response = await addADS(latitude, longitude, sub_city, price, surface, type, duration, availability, startDate, endDate);
+    // log(response);
+    if (response === undefined) {
+      setAddModalVisible(false);
+      success();
+      form.resetFields();
+      setLoading(false);
+    } else {
+      error();
+      setLoading(false);
+    }
+
   };
 
   const onFinishFailed = (errorInfo) => {
@@ -376,11 +412,14 @@ export default function App() {
                 },
               ]}
             >
-              <RangePicker disabled={isDateDisabled} />
+              <RangePicker
+                disabled={isDateDisabled}
+                format="YYYY-MM-DD"
+              />
             </Form.Item>
 
             <Form.Item wrapperCol={{ offset: 11, span: 16 }}>
-              <Button type="primary" htmlType="submit">
+              <Button type="primary" htmlType="submit" loading={loading}>
                 Submit
               </Button>
             </Form.Item>
@@ -588,7 +627,7 @@ export default function App() {
           margin: '0px',
         }}
       >
-        <Input value={`Lng: ${clickedLng}, Lat: ${clickedLat}`} contentEditable={false}/>
+        <Input value={`Lng: ${clickedLng}, Lat: ${clickedLat}`} contentEditable={false} />
       </Sider>
 
       <Layout>
