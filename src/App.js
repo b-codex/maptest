@@ -1,11 +1,14 @@
 import mapboxgl from '!mapbox-gl'; // eslint-disable-line import/no-webpack-loader-syntax
 
-import { Input, Collapse, Button, List, Select, Modal, Form, DatePicker, Slider, InputNumber, Col, Row, Space } from 'antd';
+import { Input, Collapse, Button, List, Select, Modal, Form, DatePicker, Slider, InputNumber, Col, Row, message } from 'antd';
 
 import React, { useRef, useEffect, useState } from 'react';
 
 import "antd/dist/antd.css";
 import { Layout, Card } from 'antd';
+
+import { getDocs, onSnapshot, query, where } from 'firebase/firestore';
+import { addADS, housesCollection } from './firebase/firebase_functions';
 
 const { Content, Sider } = Layout;
 const { Search } = Input;
@@ -16,6 +19,9 @@ const { RangePicker } = DatePicker;
 mapboxgl.accessToken = 'pk.eyJ1IjoieGNhZ2U3IiwiYSI6ImNsNGlrbTc0bTBmajgzY3BmNHA1NDVwMmYifQ.SrIHjoAhw8wWViQsLfjmUQ';
 
 export default function App() {
+
+  const log = console.log;
+
   const mapContainer = useRef(null);
   // const map = useRef(null);
   const [mapObject, setMap] = useState();
@@ -24,9 +30,6 @@ export default function App() {
   const [lat, setLat] = useState(0);
   const [zoom, setZoom] = useState(0);
 
-  const [ILng, setILng] = useState(0);
-  const [ILat, setILat] = useState(0);
-
   const [clickedLat, setClickedLat] = useState(0);
   const [clickedLng, setClickedLng] = useState(0);
 
@@ -34,8 +37,8 @@ export default function App() {
   const [addModalVisible, setAddModalVisible] = useState(false);
 
   const [form] = Form.useForm();
+  const [loading, setLoading] = useState(false);
 
-  var results = []
   const [isDateDisabled, setIsDateDisabled] = useState(true);
   const [priceMin, setPriceMin] = useState(1000);
   const [priceMax, setPriceMax] = useState(10000);
@@ -85,37 +88,132 @@ export default function App() {
     setDurationMax(value[1]);
   }
 
+  const onSearchChange = (value) => {
+    // log(value.nativeEvent.data);
+    // if (value.nativeEvent.data === null) {
+    //   setLocations(temp);
+    // }
+  }
+
   const onSearch = async (value) => {
 
-    const responses = await fetch('https://api.mapbox.com/geocoding/v5/mapbox.places/' + value + '.json?access_token=pk.eyJ1IjoieGNhZ2U3IiwiYSI6ImNsNGlrbTc0bTBmajgzY3BmNHA1NDVwMmYifQ.SrIHjoAhw8wWViQsLfjmUQ')
-      .then(response => {
-        return response.json();
-      })
+    // const responses = await fetch('https://api.mapbox.com/geocoding/v5/mapbox.places/' + value + '.json?access_token=pk.eyJ1IjoieGNhZ2U3IiwiYSI6ImNsNGlrbTc0bTBmajgzY3BmNHA1NDVwMmYifQ.SrIHjoAhw8wWViQsLfjmUQ')
+    //   .then(response => {
+    //     return response.json();
+    //   })
+    setLoading(true);
+    // get data from collection
+    const q = query(housesCollection, where('sub_city', '==', value.toLowerCase()));
+    const responses = await getDocs(q).then(data => {
+      let houses = [];
+      data.docs.forEach(doc => {
+        houses.push({ ...doc.data(), id: doc.id });
+      }
+      );
+      return houses;
+    }
+    ).catch(err => {
+      log(err);
+    }
+    );
 
-    setLocations(responses.features);
-  };
-
-  const handleChange = (value) => {
-    console.log(`selected ${value}`);
+    if (responses.length === 0) {
+      setLoading(false);
+      info();
+      setLocations([]);
+    }
+    else {
+      setLocations(responses);
+      setLoading(false);
+    }
   };
 
   const handleAvailability = (value) => {
-    if (value === "Occupied") {
-      setIsDateDisabled(true);
-    }
-    else {
-      setIsDateDisabled(false);
-    }
+    // if (value === "Occupied") {
+    setIsDateDisabled(false);
+    // }
+    // else {
+    //   setIsDateDisabled(true);
+    // }
 
   };
 
-  const onFinish = (values) => {
-    console.log('Success:', values);
+  const success = () => {
+    message.success('Advertisement added successfully');
+  };
+
+  const info = () => {
+    message.info('No advertisements found');
+  };
+
+  const error = () => {
+    message.error('Something went wrong. Please Try Again.');
+  };
+
+  const formFailed = () => {
+    message.error('Please Make Sure All Fields Are Filled');
+  };
+
+  const onFinish = async (values) => {
+    setLoading(true);
+    // console.log('Success:', values.date[0]['_d']);
+    const latitude = values.lat;
+    const longitude = values.lng;
+    const sub_city = values.sub_city.toLowerCase();
+    const price = values.price;
+    const surface = values.surface;
+    const type = values.type;
+    const duration = values.duration;
+    const availability = values.availability;
+    const startDate = values.date[0]['_d'];
+    const endDate = values.date[1]['_d'];
+    const response = await addADS(latitude, longitude, sub_city, price, surface, type, duration, availability, startDate, endDate);
+    // log(response);
+    if (response === undefined) {
+      setAddModalVisible(false);
+      success();
+      form.resetFields();
+      setLoading(false);
+    } else {
+      error();
+      setLoading(false);
+    }
+
   };
 
   const onFinishFailed = (errorInfo) => {
     console.log('Failed:', errorInfo);
+    formFailed();
   };
+
+  // get data when the page loads
+  useEffect(() => {
+    // onSnapshot(housesCollection, (snapshot) => {
+    //   snapshot.docs.forEach(doc => {
+    //     // setAds({ ...doc.data(), id: doc.id });
+    //     x.push({ ...doc.data(), id: doc.id });
+    //   }
+    //   );
+    // })
+
+    async function getData() {
+      const responses = await getDocs(housesCollection).then(data => {
+        let houses = [];
+        data.docs.forEach(doc => {
+          houses.push({ ...doc.data(), id: doc.id });
+        }
+        );
+        return houses;
+      }
+      ).catch(err => {
+        log(err);
+      }
+      );
+      setLocations(responses);
+      return responses;
+    }
+    getData();
+  }, []);
 
   useEffect(() => {
     // get location from browser geolocation
@@ -123,16 +221,12 @@ export default function App() {
     //   setLat(position.coords.latitude);
     //   setLng(position.coords.longitude);
     //   setILat(position.coords.latitude);
-    //   setILng(position.coords.longitude);
     // });
 
     setLat(9.00722);
     setLng(38.70694);
 
-    setILat(9.00722);
-    setILng(38.70694);
-
-    setZoom(11);
+    setZoom(10);
 
     // init the map object
     const map = new mapboxgl.Map({
@@ -164,23 +258,57 @@ export default function App() {
       setClickedLat(e.lngLat.lat.toFixed(5));
     });
 
-    // adding markers
+    // // adding markers
+    // locations.map(location => {
+    //   var xLng = location.center[0];
+    //   var xLat = location.center[1];
+    //   // console.log(location);
+    //   // console.log(xLat, xLng);
+
+    //   // a popup will show with information about the marker
+    //   var popup = new mapboxgl.Popup({ offset: 25, closeOnClick: true, closeButton: false })
+    //     .setHTML(
+    //       '<h3>' + location.place_name + '</h3>' +
+    //       '<p>' + location.center[0] + ',' + location.center[1] + '</p>'
+    //       // '<p>' + location.properties.address + '</p>' 
+    //     );
+
+    //   // create the marker
+    //   new mapboxgl.Marker()
+    //     .setLngLat([xLng, xLat])
+    //     .setPopup(popup)
+    //     .addTo(map);
+
+    // });
+
     locations.map(location => {
-      var xLng = location.center[0];
-      var xLat = location.center[1];
+      var xLng = location.longitude;
+      var xLat = location.latitude;
       // console.log(location);
       // console.log(xLat, xLng);
 
       // a popup will show with information about the marker
       var popup = new mapboxgl.Popup({ offset: 25, closeOnClick: true, closeButton: false })
         .setHTML(
-          '<h3>' + location.place_name + '</h3>' +
-          '<p>' + location.center[0] + ',' + location.center[1] + '</p>'
+          '<p> Sub-city: ' + location.sub_city[0].toUpperCase() + location.sub_city.substring(1) + '</p>' +
+          '<p> Price: ' + location.price + ' Birr</p>' +
+          '<p> Surface: ' + location.surface + ' m²</p>' +
+          '<p> Type: ' + location.type[0].toUpperCase() + location.type.substring(1) + '</p>' +
+          '<p> Duration: ' + location.duration + ' Days</p>' +
+          '<p> Availability: ' + location.availability[0].toUpperCase() + location.availability.substring(1) + '</p>'
           // '<p>' + location.properties.address + '</p>' 
         );
 
+      let color = '';
+      if (location.availability === "occupied") {
+        color = '#ff0000'; //red
+      }
+      if (location.availability === "unoccupied") {
+        color = '#00ff00'; //green
+      }
+
       // create the marker
-      new mapboxgl.Marker()
+      new mapboxgl.Marker({ color: color })
         .setLngLat([xLng, xLat])
         .setPopup(popup)
         .addTo(map);
@@ -195,8 +323,7 @@ export default function App() {
 
     <Layout>
 
-      {/* top side bar */}
-
+      {/* add */}
       <Sider
         width={300}
         style={{
@@ -218,7 +345,7 @@ export default function App() {
           type="primary"
           onClick={() => setAddModalVisible(true)}
           style={{
-            height: '4vh',
+            height: '4.97vh',
             width: '100%',
             borderRadius: '0px',
             border: '0px',
@@ -281,7 +408,7 @@ export default function App() {
                 },
               ]}
             >
-              <Select defaultValue="Select One" style={{ width: '100%' }} onChange={handleChange}>
+              <Select style={{ width: '100%' }} >
                 <Option value="Addis Ketema">Addis Ketema</Option>
                 <Option value="Akaki Kaliti">Akaki Kaliti</Option>
                 <Option value="Arada">Arada</Option>
@@ -331,9 +458,9 @@ export default function App() {
                 },
               ]}
             >
-              <Select initialValues="Select One" style={{ width: '100%' }} onChange={handleChange}>
-                <Option value="Ground">Ground</Option>
-                <Option value="Building">Building</Option>
+              <Select style={{ width: '100%' }} >
+                <Option value="ground">Ground</Option>
+                <Option value="building">Building</Option>
               </Select>
             </Form.Item>
 
@@ -360,9 +487,9 @@ export default function App() {
                 },
               ]}
             >
-              <Select initialValues="Select One" style={{ width: '100%' }} onChange={handleAvailability}>
-                <Option value="Occupied">Occupied</Option>
-                <Option value="Unoccupied">Unoccupied</Option>
+              <Select style={{ width: '100%' }} onChange={handleAvailability}>
+                <Option value="occupied">Occupied</Option>
+                <Option value="unoccupied">Unoccupied</Option>
               </Select>
             </Form.Item>
 
@@ -376,24 +503,29 @@ export default function App() {
                 },
               ]}
             >
-              <RangePicker disabled={isDateDisabled} />
+              <RangePicker
+                disabled={isDateDisabled}
+                format="YYYY-MM-DD"
+                style={{ width: '100%' }}
+              />
             </Form.Item>
 
             <Form.Item wrapperCol={{ offset: 11, span: 16 }}>
-              <Button type="primary" htmlType="submit">
+              <Button type="primary" htmlType="submit" loading={loading}>
                 Submit
               </Button>
             </Form.Item>
+
           </Form>
         </Modal>
       </Sider>
 
-      {/* mid side bar */}
+      {/* search */}
       <Sider
         width={300}
         style={{
           overflow: 'auto',
-          height: '35vh',
+          height: '50vh',
           position: 'fixed',
           top: '5vh',
           left: 0,
@@ -412,20 +544,22 @@ export default function App() {
           allowClear
           enterButton
           size="medium"
+          onChange={onSearchChange}
           onSearch={onSearch}
+          loading={loading}
         />
 
         <List
-          size="large"
+          size="medium"
           dataSource={locations}
-          renderItem={item =>
+          renderItem={location =>
             <List.Item
               className='clickable'
               onClick={() => {
 
                 // go to the location
                 mapObject.flyTo({
-                  center: [item.center[0], item.center[1]],
+                  center: [location.longitude, location.latitude],
                   zoom: 15,
                   speed: 3,
                   curve: 1,
@@ -433,24 +567,21 @@ export default function App() {
                     return t;
                   }
                 });
-
-                setILng(item.center[0]);
-                setILat(item.center[1]);
               }}
-            >{item.place_name}
+            >{location.sub_city[0].toUpperCase() + location.sub_city.substring(1) + ' Sub-city' + ' (' + location.latitude + ', ' + location.longitude + ' )'}
             </List.Item>
           }
         />
       </Sider>
 
-      {/* bottom side bar */}
+      {/* filters */}
       <Sider
         width={300}
         style={{
           overflow: 'auto',
-          height: '56.5vh',
+          height: '45vh',
           position: 'fixed',
-          top: '40vh',
+          top: '55vh',
           left: 0,
           backgroundColor: '#fff',
           borderRight: '1px solid #e8e8e8',
@@ -471,7 +602,7 @@ export default function App() {
           <Collapse accordion>
 
             <Panel header="Sub-city" key="1">
-              <Select defaultValue="Select One" style={{ width: '100%' }} onChange={handleChange}>
+              <Select style={{ width: '100%' }} >
                 <Option value="Addis Ketema">Addis Ketema</Option>
                 <Option value="Akaki Kaliti">Akaki Kaliti</Option>
                 <Option value="Arada">Arada</Option>
@@ -530,7 +661,7 @@ export default function App() {
             </Panel>
 
             <Panel header="Type" key="4">
-              <Select defaultValue="Select One" style={{ width: '100%' }} onChange={handleChange}>
+              <Select style={{ width: '100%' }} >
                 <Option value="Ground">Ground</Option>
                 <Option value="Building">Building</Option>
               </Select>
@@ -559,7 +690,7 @@ export default function App() {
             </Panel>
 
             <Panel header="Availability" key="6">
-              <Select defaultValue="Select One" style={{ width: '100%' }} onChange={handleChange}>
+              <Select style={{ width: '100%' }} >
                 <Option value="Occupied">Occupied</Option>
                 <Option value="Unoccupied">Unoccupied</Option>
               </Select>
@@ -572,7 +703,7 @@ export default function App() {
       </Sider>
 
       {/* map clicked location */}
-      <Sider
+      {/* <Sider
         width={300}
         style={{
           overflow: 'auto',
@@ -588,8 +719,8 @@ export default function App() {
           margin: '0px',
         }}
       >
-        <Input value={`Lng: ${clickedLng}, Lat: ${clickedLat}`} contentEditable={false}/>
-      </Sider>
+        <Input value={`Lng: ${clickedLng}, Lat: ${clickedLat}`} contentEditable={false} />
+      </Sider> */}
 
       <Layout>
         {/* <Header
@@ -604,10 +735,11 @@ export default function App() {
         >
           Header
         </Header> */}
+
         <Content>
           <div>
             <div className="sidebar">
-              Lon: {ILng} | Lat: {ILat}
+              Clicked Lat: {clickedLat} | Clicked Lng: {clickedLng}
             </div>
             <div ref={mapContainer} className="map-container" />
           </div>
