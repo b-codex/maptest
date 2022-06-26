@@ -186,6 +186,23 @@ export default function App() {
     formFailed();
   };
 
+  async function getData() {
+    const responses = await getDocs(housesCollection).then(data => {
+      let houses = [];
+      data.docs.forEach(doc => {
+        houses.push({ ...doc.data(), id: doc.id });
+      }
+      );
+      return houses;
+    }
+    ).catch(err => {
+      log(err);
+    }
+    );
+    setLocations(responses);
+    return responses;
+  }
+
   // get data when the page loads
   useEffect(() => {
     // onSnapshot(housesCollection, (snapshot) => {
@@ -195,23 +212,6 @@ export default function App() {
     //   }
     //   );
     // })
-
-    async function getData() {
-      const responses = await getDocs(housesCollection).then(data => {
-        let houses = [];
-        data.docs.forEach(doc => {
-          houses.push({ ...doc.data(), id: doc.id });
-        }
-        );
-        return houses;
-      }
-      ).catch(err => {
-        log(err);
-      }
-      );
-      setLocations(responses);
-      return responses;
-    }
     getData();
   }, []);
 
@@ -319,10 +319,77 @@ export default function App() {
     setMap(map);
   }, [lat, lng, zoom, locations]);
 
+  //reset the search filters with a button
+  const resetMap = () => {
+    getData();
+    // setLocations([]);
+  }
+
+  //  async function filterMap(search, q) {
+  //   if (search !== '') {
+  //     if (q.toLowerCase() === 'sub_city') {
+  //       // await getData();
+  //       setLocations(locations.filter(location => location.sub_city.toLowerCase().includes(search.toLowerCase())));
+  //     }
+
+  //     if (q.toLowerCase() === 'type') {
+  //       setLocations(locations.filter(location => location.type.toLowerCase().includes(search.toLowerCase())));
+  //     }
+
+  //     if (q.toLowerCase() === 'availability') {
+  //       setLocations(locations.filter(location => location.availability.toLowerCase().includes(search.toLowerCase())));
+  //     }
+
+
+  //   }
+  // }
+  //search from the map
+  // useEffect(() => {
+  // }, [search, locations]);
 
   //filter functions
+  
+  
+  const onFilter = async (value, fl) => {
+
+    setLoading(true);
+
+    // get data from collection
+    const q = query(housesCollection, where(fl, '==', value.toLowerCase()));
+    const responses = await getDocs(q).then(data => {
+      let houses = [];
+      data.docs.forEach(doc => {
+        houses.push({ ...doc.data(), id: doc.id });
+      }
+      );
+      return houses;
+    }
+    ).catch(err => {
+      log(err);
+    }
+    );
+
+    if (responses.length === 0) {
+      setLoading(false);
+      info();
+      setLocations([]);
+    }
+    else {
+      setLocations(responses);
+      setLoading(false);
+    }
+  };
+  
   const filterBySubCity = (value) => {
-    onSearch(value);
+    onFilter(value, 'sub_city');
+  }
+
+  const filterByType = (value) => {
+    onFilter(value, 'type');
+  }
+
+  const filterByAvailability = (value) => {
+    onFilter(value, 'availability');
   }
 
   return (
@@ -574,7 +641,7 @@ export default function App() {
                   }
                 });
               }}
-            >{location.sub_city[0].toUpperCase() + location.sub_city.substring(1) + ' Sub-city' + ' (' + location.latitude + ', ' + location.longitude + ' )'}
+            >{location.sub_city[0].toUpperCase() + location.sub_city.substring(1) + ' Sub-city' + ' (' + location.latitude + ', ' + location.longitude + ')'}
             </List.Item>
           }
         />
@@ -601,7 +668,7 @@ export default function App() {
           title="Filter Options"
           bordered={false}
           extra={
-            <Button type="primary" size="small" ghost>
+            <Button type="primary" size="medium" ghost danger onClick={resetMap}>
               Reset
             </Button>
           }>
@@ -667,7 +734,7 @@ export default function App() {
             </Panel>
 
             <Panel header="Type" key="4">
-              <Select style={{ width: '100%' }} >
+              <Select style={{ width: '100%' }} onChange={filterByType}>
                 <Option value="Ground">Ground</Option>
                 <Option value="Building">Building</Option>
               </Select>
@@ -678,10 +745,10 @@ export default function App() {
                 <Row>
                   {/* <Space direction='horizontal'> */}
                   <Col span={12}>
-                    <InputNumber placeholder="Min" name='durationMin' value={durationMin} onChange={handleDurationMin} addonAfter="m²" />
+                    <InputNumber placeholder="Min" name='durationMin' value={durationMin} onChange={handleDurationMin} addonAfter="Days" />
                   </Col>
                   <Col span={12}>
-                    <InputNumber placeholder="Max" name='durationMax' value={durationMax} onChange={handleDurationMax} addonAfter="m²" />
+                    <InputNumber placeholder="Max" name='durationMax' value={durationMax} onChange={handleDurationMax} addonAfter="Days" />
                   </Col>
                   {/* </Space> */}
                 </Row>
@@ -696,7 +763,7 @@ export default function App() {
             </Panel>
 
             <Panel header="Availability" key="6">
-              <Select style={{ width: '100%' }} >
+              <Select style={{ width: '100%' }} onChange={filterByAvailability}>
                 <Option value="Occupied">Occupied</Option>
                 <Option value="Unoccupied">Unoccupied</Option>
               </Select>
