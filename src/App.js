@@ -174,6 +174,7 @@ export default function App() {
       success();
       form.resetFields();
       setLoading(false);
+      getData();
     } else {
       error();
       setLoading(false);
@@ -379,7 +380,6 @@ export default function App() {
     }
   };
 
-
   const onFilterRange = async (fl, min, max) => {
 
     setLoading(true);
@@ -546,7 +546,7 @@ export default function App() {
                 },
               ]}
             >
-              <InputNumber addonAfter="Birr" />
+              <InputNumber addonAfter="Birr" style={{ width: '100%' }} />
             </Form.Item>
 
             <Form.Item
@@ -559,7 +559,7 @@ export default function App() {
                 },
               ]}
             >
-              <InputNumber addonAfter="m²" />
+              <InputNumber addonAfter="m²" style={{ width: '100%' }} />
             </Form.Item>
 
             <Form.Item
@@ -588,7 +588,7 @@ export default function App() {
                 },
               ]}
             >
-              <InputNumber addonAfter="Days" />
+              <InputNumber addonAfter="Days" style={{ width: '100%' }} />
             </Form.Item>
 
             <Form.Item
