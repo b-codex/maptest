@@ -40,8 +40,8 @@ export default function App() {
   const [loading, setLoading] = useState(false);
 
   const [isDateDisabled, setIsDateDisabled] = useState(true);
-  const [priceMin, setPriceMin] = useState(1000);
-  const [priceMax, setPriceMax] = useState(10000);
+  const [priceMin, setPriceMin] = useState(10000);
+  const [priceMax, setPriceMax] = useState(100000);
 
   const handlePriceMin = (value) => {
     setPriceMin(value);
@@ -322,7 +322,6 @@ export default function App() {
   //reset the search filters with a button
   const resetMap = () => {
     getData();
-    // setLocations([]);
   }
 
   //  async function filterMap(search, q) {
@@ -348,8 +347,8 @@ export default function App() {
   // }, [search, locations]);
 
   //filter functions
-  
-  
+
+
   const onFilter = async (value, fl) => {
 
     setLoading(true);
@@ -379,7 +378,37 @@ export default function App() {
       setLoading(false);
     }
   };
-  
+
+
+  const onFilterRange = async (fl, min, max) => {
+
+    setLoading(true);
+    log('min: ' + min + ' max: ' + max);
+    // get data from collection
+    const q = query(housesCollection, where(fl, '>=', min), where(fl, '<=', max));
+    const responses = await getDocs(q).then(data => {
+      let houses = [];
+      data.docs.forEach(doc => {
+        houses.push({ ...doc.data(), id: doc.id });
+      }
+      );
+      return houses;
+    }
+    ).catch(err => {
+      log(err);
+    }
+    );
+    if (responses.length === 0) {
+      info();
+      setLocations([]);
+      setLoading(false);
+    }
+    else {
+      setLocations(responses);
+      setLoading(false);
+    }
+  };
+
   const filterBySubCity = (value) => {
     onFilter(value, 'sub_city');
   }
@@ -390,6 +419,18 @@ export default function App() {
 
   const filterByAvailability = (value) => {
     onFilter(value, 'availability');
+  }
+
+  const filterByPrice = () => {
+    onFilterRange('price', priceMin, priceMax);
+  }
+
+  const filterBySurface = () => {
+    onFilterRange('surface', surfaceMin, surfaceMax);
+  }
+
+  const filterByDuration = () => {
+    onFilterRange('duration', durationMin, durationMax);
   }
 
   return (
@@ -505,7 +546,7 @@ export default function App() {
                 },
               ]}
             >
-              <Input addonAfter="Birr" />
+              <InputNumber addonAfter="Birr" />
             </Form.Item>
 
             <Form.Item
@@ -518,7 +559,7 @@ export default function App() {
                 },
               ]}
             >
-              <Input addonAfter="m²" />
+              <InputNumber addonAfter="m²" />
             </Form.Item>
 
             <Form.Item
@@ -547,7 +588,7 @@ export default function App() {
                 },
               ]}
             >
-              <Input addonAfter="Days" />
+              <InputNumber addonAfter="Days" />
             </Form.Item>
 
             <Form.Item
@@ -598,7 +639,7 @@ export default function App() {
         width={300}
         style={{
           overflow: 'auto',
-          height: '50vh',
+          height: '35vh',
           position: 'fixed',
           top: '5vh',
           left: 0,
@@ -652,9 +693,9 @@ export default function App() {
         width={300}
         style={{
           overflow: 'auto',
-          height: '45vh',
+          height: '60vh',
           position: 'fixed',
-          top: '55vh',
+          top: '40vh',
           left: 0,
           backgroundColor: '#fff',
           borderRight: '1px solid #e8e8e8',
@@ -689,15 +730,15 @@ export default function App() {
               </Select>
             </Panel>
 
-            <Panel header="Price" key="2">
+            <Panel header="Price (Birr)" key="2">
               <Input.Group >
                 <Row>
                   {/* <Space direction='horizontal'> */}
                   <Col span={12}>
-                    <InputNumber placeholder="Min" name='priceMin' value={priceMin} onChange={handlePriceMin} addonAfter="Birr" />
+                    <InputNumber placeholder="Min" name='priceMin' value={priceMin} onChange={handlePriceMin} />
                   </Col>
                   <Col span={12}>
-                    <InputNumber placeholder="Max" name='priceMax' value={priceMax} onChange={handlePriceMax} addonAfter="Birr" />
+                    <InputNumber placeholder="Max" name='priceMax' value={priceMax} onChange={handlePriceMax} />
                   </Col>
                   {/* </Space> */}
                 </Row>
@@ -706,20 +747,24 @@ export default function App() {
                 range={{ draggableTrack: true }}
                 defaultValue={[priceMin, priceMax]}
                 min={1}
-                max={10000}
+                max={1000000}
+                value={[priceMin, priceMax]}
                 onChange={handlePriceSlider}
               />
+              <Row align='center'>
+                <Button type='primary' onClick={filterByPrice}>Apply</Button>
+              </Row>
             </Panel>
 
-            <Panel header="Surface" key="3">
+            <Panel header="Surface (m²)" key="3">
               <Input.Group >
                 <Row>
                   {/* <Space direction='horizontal'> */}
                   <Col span={12}>
-                    <InputNumber placeholder="Min" name='surfaceMin' value={surfaceMin} onChange={handleSurfaceMin} addonAfter="m²" />
+                    <InputNumber placeholder="Min" name='surfaceMin' value={surfaceMin} onChange={handleSurfaceMin} />
                   </Col>
                   <Col span={12}>
-                    <InputNumber placeholder="Max" name='surfaceMax' value={surfaceMax} onChange={handleSurfaceMax} addonAfter="m²" />
+                    <InputNumber placeholder="Max" name='surfaceMax' value={surfaceMax} onChange={handleSurfaceMax} />
                   </Col>
                   {/* </Space> */}
                 </Row>
@@ -729,8 +774,12 @@ export default function App() {
                 defaultValue={[surfaceMin, surfaceMax]}
                 min={1}
                 max={1000}
+                value={[surfaceMin, surfaceMax]}
                 onChange={handleSurfaceSlider}
               />
+              <Row align='center'>
+                <Button type='primary' onClick={filterBySurface}>Apply</Button>
+              </Row>
             </Panel>
 
             <Panel header="Type" key="4">
@@ -740,15 +789,15 @@ export default function App() {
               </Select>
             </Panel>
 
-            <Panel header="Duration" key="5">
+            <Panel header="Duration (Days)" key="5">
               <Input.Group >
                 <Row>
                   {/* <Space direction='horizontal'> */}
                   <Col span={12}>
-                    <InputNumber placeholder="Min" name='durationMin' value={durationMin} onChange={handleDurationMin} addonAfter="Days" />
+                    <InputNumber placeholder="Min" name='durationMin' value={durationMin} onChange={handleDurationMin} />
                   </Col>
                   <Col span={12}>
-                    <InputNumber placeholder="Max" name='durationMax' value={durationMax} onChange={handleDurationMax} addonAfter="Days" />
+                    <InputNumber placeholder="Max" name='durationMax' value={durationMax} onChange={handleDurationMax} />
                   </Col>
                   {/* </Space> */}
                 </Row>
@@ -758,8 +807,12 @@ export default function App() {
                 defaultValue={[durationMin, durationMax]}
                 min={1}
                 max={100}
+                value={[durationMin, durationMax]}
                 onChange={handleDurationSlider}
               />
+              <Row align='center'>
+                <Button type='primary' onClick={filterByDuration}>Apply</Button>
+              </Row>
             </Panel>
 
             <Panel header="Availability" key="6">
