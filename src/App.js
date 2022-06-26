@@ -319,6 +319,12 @@ export default function App() {
     setMap(map);
   }, [lat, lng, zoom, locations]);
 
+
+  //filter functions
+  const filterBySubCity = (value) => {
+    onSearch(value);
+  }
+
   return (
 
     <Layout>
@@ -602,7 +608,7 @@ export default function App() {
           <Collapse accordion>
 
             <Panel header="Sub-city" key="1">
-              <Select style={{ width: '100%' }} >
+              <Select style={{ width: '100%' }} onChange={filterBySubCity}>
                 <Option value="Addis Ketema">Addis Ketema</Option>
                 <Option value="Akaki Kaliti">Akaki Kaliti</Option>
                 <Option value="Arada">Arada</Option>
