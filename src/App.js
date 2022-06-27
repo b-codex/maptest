@@ -1,6 +1,6 @@
 import mapboxgl from '!mapbox-gl'; // eslint-disable-line import/no-webpack-loader-syntax
 
-import { Input, Collapse, Button, List, Select, Modal, Form, DatePicker, Slider, InputNumber, Col, Row, message } from 'antd';
+import { Input, Collapse, Button, List, Select, Modal, Form, DatePicker, Slider, InputNumber, Col, Row, message, Space } from 'antd';
 
 import React, { useRef, useEffect, useState } from 'react';
 
@@ -217,12 +217,6 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    // get location from browser geolocation
-    // navigator.geolocation.getCurrentPosition(function (position) {
-    //   setLat(position.coords.latitude);
-    //   setLng(position.coords.longitude);
-    //   setILat(position.coords.latitude);
-    // });
 
     setLat(9.00722);
     setLng(38.70694);
@@ -349,6 +343,25 @@ export default function App() {
 
   //filter functions
 
+
+  const getCoordinatesFromCurrentLocation = async () => {
+    setLoading(true);
+    // get location from browser geolocation
+    navigator.geolocation.getCurrentPosition(function (position) {
+      form.setFieldsValue({
+        lat: position.coords.latitude.toFixed(4),
+        lng: position.coords.longitude.toFixed(4),
+      });
+      setLoading(false);
+    });
+  }
+
+  const getCoordinatesFromClickedLocation = () => {
+    form.setFieldsValue({
+      lat: clickedLat,
+      lng: clickedLng,
+    });
+  }
 
   const onFilter = async (value, fl) => {
 
@@ -485,9 +498,31 @@ export default function App() {
             onFinish={onFinish}
             onFinishFailed={onFinishFailed}
             autoComplete="off"
+            style={
+              {
+                width: '100%',
+                height: '100%',
+              }
+            }
           >
+            <Row align='center' style={
+              {
+                marginTop: '10px',
+                marginBottom: '20px',
+              }
+            }>
+              <Space size={'large'}>
+                <Button type='primary' ghost onClick={getCoordinatesFromClickedLocation}>
+                  Use Clicked Location
+                </Button>
+                <Button type='primary' ghost onClick={getCoordinatesFromCurrentLocation} loading={loading}>
+                  Use Current Location
+                </Button>
+              </Space>
+            </Row>
+
             <Form.Item
-              label="Latitude"
+              label="Lat"
               name="lat"
               rules={[
                 {
@@ -500,7 +535,7 @@ export default function App() {
             </Form.Item>
 
             <Form.Item
-              label="Longitude"
+              label="Lng"
               name="lng"
               rules={[
                 {
