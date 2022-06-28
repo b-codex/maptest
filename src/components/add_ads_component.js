@@ -1,4 +1,4 @@
-import { Input, Button, Select, Modal, Form, DatePicker, InputNumber, Row, message, Space } from 'antd';
+import { Input, Button, Select, Modal, Form, DatePicker, InputNumber, Row, message, Space, Tooltip } from 'antd';
 
 import React, { useState } from 'react';
 import { Layout } from 'antd';
@@ -71,7 +71,7 @@ const Add_ads_component = ({ clickedLat, clickedLng, getData, setLocations }) =>
         const date = values.date.format('LL').toString();
 
         const response = await addADS(latitude, longitude, sub_city, price, surface, type, duration, availability, date);
-        // log(response);
+
         if (response === undefined) {
             setAddModalVisible(false);
             success();
@@ -131,6 +131,7 @@ const Add_ads_component = ({ clickedLat, clickedLng, getData, setLocations }) =>
                     onCancel={() => setAddModalVisible(false)}
                     footer={null}
                 >
+
                     <Form
                         form={form}
                         name="add_ads"
@@ -154,12 +155,17 @@ const Add_ads_component = ({ clickedLat, clickedLng, getData, setLocations }) =>
                             }
                         }>
                             <Space size={'large'}>
-                                <Button type='primary' ghost onClick={getCoordinatesFromClickedLocation}>
-                                    Use Clicked Location
-                                </Button>
-                                <Button type='primary' ghost onClick={getCoordinatesFromCurrentLocation} loading={loading}>
-                                    Use Current Location
-                                </Button>
+                                <Tooltip title="Get Coordinates From Clicked Location">
+                                    <Button type='primary' ghost onClick={getCoordinatesFromClickedLocation}>
+                                        Use Clicked Location
+                                    </Button>
+                                </Tooltip>
+
+                                <Tooltip title="Get Coordinates From Current Location">
+                                    <Button type='primary' ghost onClick={getCoordinatesFromCurrentLocation} loading={loading}>
+                                        Use Current Location
+                                    </Button>
+                                </Tooltip>
                             </Space>
                         </Row>
 

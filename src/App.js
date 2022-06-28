@@ -41,16 +41,18 @@ export default function App() {
     //   }
     //   );
     // })
+
+    setLat(9.00722);
+    setLng(38.78694);
+
+    setZoom(11);
+
     getData({ setLocations });
   }, []);
 
   // init map when the page loads
   useEffect(() => {
 
-    setLat(9.00722);
-    setLng(38.78694);
-
-    setZoom(11);
 
     // init the map object
     const map = new mapboxgl.Map({
@@ -82,29 +84,7 @@ export default function App() {
       setClickedLat(e.lngLat.lat.toFixed(5));
     });
 
-    // // adding markers
-    // locations.map(location => {
-    //   var xLng = location.center[0];
-    //   var xLat = location.center[1];
-    //   // console.log(location);
-    //   // console.log(xLat, xLng);
-
-    //   // a popup will show with information about the marker
-    //   var popup = new mapboxgl.Popup({ offset: 25, closeOnClick: true, closeButton: false })
-    //     .setHTML(
-    //       '<h3>' + location.place_name + '</h3>' +
-    //       '<p>' + location.center[0] + ',' + location.center[1] + '</p>'
-    //       // '<p>' + location.properties.address + '</p>' 
-    //     );
-
-    //   // create the marker
-    //   new mapboxgl.Marker()
-    //     .setLngLat([xLng, xLat])
-    //     .setPopup(popup)
-    //     .addTo(map);
-
-    // });
-
+    // adding markers
     locations.map(location => {
       var xLng = location.longitude;
       var xLat = location.latitude;
@@ -142,11 +122,6 @@ export default function App() {
     // set map object
     setMap(map);
   }, [lat, lng, zoom, locations]);
-
-  //reset the search filters with a button
-  const resetMap = () => {
-    getData({ setLocations });
-  }
 
   //  async function filterMap(search, q) {
   //   if (search !== '') {
@@ -193,24 +168,10 @@ export default function App() {
 
       <Filter_Component
         setLocations={setLocations}
-        resetMap={resetMap}
       />
 
       {/* map coordinates */}
       <Layout>
-        {/* <Header
-          style={{
-            height: '10vh',
-            background: '#fff',
-            padding: 0,
-            margin: '0px',
-            borderBottom: '1px solid #e8e8e8',
-            boxShadow: '0 0 10px rgba(0, 0, 0, 0.1)',
-          }}
-        >
-          Header
-        </Header> */}
-
         <Content
           style={{
             padding: '0px',
@@ -228,7 +189,6 @@ export default function App() {
             <div ref={mapContainer} className="map-container" />
           </div>
         </Content>
-        {/* <Footer>Footer</Footer> */}
       </Layout>
     </Layout >
 
