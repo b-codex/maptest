@@ -27,9 +27,14 @@ const Filter_Form = ({ setLocations }) => {
         const { priceMin, priceMax } = price;
         const { surfaceMin, surfaceMax } = surface;
         const { durationMin, durationMax } = duration;
+        
         // const query = housesCollection.where('price', '>=', priceMin).where('price', '<=', priceMax);
         // const query2 = housesCollection.where('surface', '>=', surfaceMin).where('surface', '<=', surfaceMax);
         // const query3 = housesCollection.where('duration', '>=', durationMin).where('duration', '<=', durationMax);
+        
+
+        
+
         log(values);
 
         setLoading(false);
