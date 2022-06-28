@@ -152,15 +152,15 @@ const Filter_Form = ({ setLocations }) => {
     };
 
     const filterBySubCity = (value) => {
-        onFilter(value, 'sub_city');
+        // onFilter(value, 'sub_city');
     }
 
     const filterByType = (value) => {
-        onFilter(value, 'type');
+        // onFilter(value, 'type');
     }
 
     const filterByAvailability = (value) => {
-        onFilter(value, 'availability');
+        // onFilter(value, 'availability');
     }
 
     const filterByPrice = () => {
