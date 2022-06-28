@@ -1,20 +1,17 @@
 import mapboxgl from '!mapbox-gl'; // eslint-disable-line import/no-webpack-loader-syntax
 
-import { Input, Collapse, Button, List, Select, Modal, Form, DatePicker, Slider, InputNumber, Col, Row, message, Space } from 'antd';
-
 import React, { useRef, useEffect, useState } from 'react';
 
 import "antd/dist/antd.css";
-import { Layout, Card } from 'antd';
+import { Layout } from 'antd';
 
-import { getDocs, onSnapshot, query, where } from 'firebase/firestore';
-import { addADS, housesCollection } from './firebase/firebase_functions';
+import { getData } from './firebase/firebase_functions';
 
-const { Content, Sider } = Layout;
-const { Search } = Input;
-const { Panel } = Collapse;
-const { Option } = Select;
-const { RangePicker } = DatePicker;
+import Filter_Component from './components/filter_component';
+import Add_ads_component from './components/add_ads_component';
+import Search_Component from './components/search_component';
+
+const { Content } = Layout;
 
 mapboxgl.accessToken = 'pk.eyJ1IjoieGNhZ2U3IiwiYSI6ImNsNGlrbTc0bTBmajgzY3BmNHA1NDVwMmYifQ.SrIHjoAhw8wWViQsLfjmUQ';
 
@@ -34,175 +31,6 @@ export default function App() {
   const [clickedLng, setClickedLng] = useState(0);
 
   const [locations, setLocations] = useState([]);
-  const [addModalVisible, setAddModalVisible] = useState(false);
-
-  const [form] = Form.useForm();
-  const [loading, setLoading] = useState(false);
-
-  const [isDateDisabled, setIsDateDisabled] = useState(true);
-  const [priceMin, setPriceMin] = useState(10000);
-  const [priceMax, setPriceMax] = useState(100000);
-
-  const handlePriceMin = (value) => {
-    setPriceMin(value);
-  }
-
-  const handlePriceMax = (value) => {
-    setPriceMax(value);
-  }
-
-  const handlePriceSlider = (value) => {
-    setPriceMin(value[0]);
-    setPriceMax(value[1]);
-  }
-
-  const [surfaceMin, setSurfaceMin] = useState(1);
-  const [surfaceMax, setSurfaceMax] = useState(1000);
-
-  const handleSurfaceMin = (value) => {
-    setSurfaceMin(value);
-  }
-
-  const handleSurfaceMax = (value) => {
-    setSurfaceMax(value);
-  }
-
-  const handleSurfaceSlider = (value) => {
-    setSurfaceMin(value[0]);
-    setSurfaceMax(value[1]);
-  }
-
-  const [durationMin, setDurationMin] = useState(1);
-  const [durationMax, setDurationMax] = useState(100);
-
-  const handleDurationMin = (value) => {
-    setDurationMin(value);
-  }
-
-  const handleDurationMax = (value) => {
-    setDurationMax(value);
-  }
-
-  const handleDurationSlider = (value) => {
-    setDurationMin(value[0]);
-    setDurationMax(value[1]);
-  }
-
-  const onSearchChange = (value) => {
-    // log(value.nativeEvent.data);
-    // if (value.nativeEvent.data === null) {
-    //   setLocations(temp);
-    // }
-  }
-
-  const onSearch = async (value) => {
-
-    // const responses = await fetch('https://api.mapbox.com/geocoding/v5/mapbox.places/' + value + '.json?access_token=pk.eyJ1IjoieGNhZ2U3IiwiYSI6ImNsNGlrbTc0bTBmajgzY3BmNHA1NDVwMmYifQ.SrIHjoAhw8wWViQsLfjmUQ')
-    //   .then(response => {
-    //     return response.json();
-    //   })
-    setLoading(true);
-    // get data from collection
-    const q = query(housesCollection, where('sub_city', '==', value.toLowerCase()));
-    const responses = await getDocs(q).then(data => {
-      let houses = [];
-      data.docs.forEach(doc => {
-        houses.push({ ...doc.data(), id: doc.id });
-      }
-      );
-      return houses;
-    }
-    ).catch(err => {
-      log(err);
-    }
-    );
-
-    if (responses.length === 0) {
-      setLoading(false);
-      info();
-      setLocations([]);
-    }
-    else {
-      setLocations(responses);
-      setLoading(false);
-    }
-  };
-
-  const handleAvailability = (value) => {
-    // if (value === "Occupied") {
-    setIsDateDisabled(false);
-    // }
-    // else {
-    //   setIsDateDisabled(true);
-    // }
-
-  };
-
-  const success = () => {
-    message.success('Advertisement added successfully');
-  };
-
-  const info = () => {
-    message.info('No advertisements found');
-  };
-
-  const error = () => {
-    message.error('Something went wrong. Please Try Again.');
-  };
-
-  const formFailed = () => {
-    message.error('Please Make Sure All Fields Are Filled');
-  };
-
-  const onFinish = async (values) => {
-    setLoading(true);
-    // console.log('Success:', values.date[0]['_d']);
-    const latitude = values.lat;
-    const longitude = values.lng;
-    const sub_city = values.sub_city.toLowerCase();
-    const price = values.price;
-    const surface = values.surface;
-    const type = values.type;
-    const duration = values.duration;
-    const availability = values.availability;
-    const startDate = values.date[0]['_d'];
-    const endDate = values.date[1]['_d'];
-    const response = await addADS(latitude, longitude, sub_city, price, surface, type, duration, availability, startDate, endDate);
-    // log(response);
-    if (response === undefined) {
-      setAddModalVisible(false);
-      success();
-      form.resetFields();
-      setLoading(false);
-      getData();
-    } else {
-      error();
-      setLoading(false);
-    }
-
-  };
-
-  const onFinishFailed = (errorInfo) => {
-    console.log('Failed:', errorInfo);
-    formFailed();
-  };
-
-  async function getData() {
-    const responses = await getDocs(housesCollection).then(data => {
-      let houses = [];
-      data.docs.forEach(doc => {
-        houses.push({ ...doc.data(), id: doc.id });
-      }
-      );
-      return houses;
-    }
-    ).catch(err => {
-      log(err);
-    }
-    );
-    setLocations(responses);
-    return responses;
-  }
 
   // get data when the page loads
   useEffect(() => {
@@ -213,15 +41,16 @@ export default function App() {
     //   }
     //   );
     // })
-    getData();
+    getData({ setLocations });
   }, []);
 
+  // init map when the page loads
   useEffect(() => {
 
     setLat(9.00722);
-    setLng(38.70694);
+    setLng(38.78694);
 
-    setZoom(10);
+    setZoom(11);
 
     // init the map object
     const map = new mapboxgl.Map({
@@ -316,7 +145,7 @@ export default function App() {
 
   //reset the search filters with a button
   const resetMap = () => {
-    getData();
+    getData({ setLocations });
   }
 
   //  async function filterMap(search, q) {
@@ -344,545 +173,30 @@ export default function App() {
   //filter functions
 
 
-  const getCoordinatesFromCurrentLocation = async () => {
-    setLoading(true);
-    // get location from browser geolocation
-    navigator.geolocation.getCurrentPosition(function (position) {
-      form.setFieldsValue({
-        lat: position.coords.latitude.toFixed(4),
-        lng: position.coords.longitude.toFixed(4),
-      });
-      setLoading(false);
-    });
-  }
-
-  const getCoordinatesFromClickedLocation = () => {
-    form.setFieldsValue({
-      lat: clickedLat,
-      lng: clickedLng,
-    });
-  }
-
-  const onFilter = async (value, fl) => {
-
-    setLoading(true);
-
-    // get data from collection
-    const q = query(housesCollection, where(fl, '==', value.toLowerCase()));
-    const responses = await getDocs(q).then(data => {
-      let houses = [];
-      data.docs.forEach(doc => {
-        houses.push({ ...doc.data(), id: doc.id });
-      }
-      );
-      return houses;
-    }
-    ).catch(err => {
-      log(err);
-    }
-    );
-
-    if (responses.length === 0) {
-      setLoading(false);
-      info();
-      setLocations([]);
-    }
-    else {
-      setLocations(responses);
-      setLoading(false);
-    }
-  };
-
-  const onFilterRange = async (fl, min, max) => {
-
-    setLoading(true);
-    log('min: ' + min + ' max: ' + max);
-    // get data from collection
-    const q = query(housesCollection, where(fl, '>=', min), where(fl, '<=', max));
-    const responses = await getDocs(q).then(data => {
-      let houses = [];
-      data.docs.forEach(doc => {
-        houses.push({ ...doc.data(), id: doc.id });
-      }
-      );
-      return houses;
-    }
-    ).catch(err => {
-      log(err);
-    }
-    );
-    if (responses.length === 0) {
-      info();
-      setLocations([]);
-      setLoading(false);
-    }
-    else {
-      setLocations(responses);
-      setLoading(false);
-    }
-  };
-
-  const filterBySubCity = (value) => {
-    onFilter(value, 'sub_city');
-  }
-
-  const filterByType = (value) => {
-    onFilter(value, 'type');
-  }
-
-  const filterByAvailability = (value) => {
-    onFilter(value, 'availability');
-  }
-
-  const filterByPrice = () => {
-    onFilterRange('price', priceMin, priceMax);
-  }
-
-  const filterBySurface = () => {
-    onFilterRange('surface', surfaceMin, surfaceMax);
-  }
-
-  const filterByDuration = () => {
-    onFilterRange('duration', durationMin, durationMax);
-  }
-
   return (
 
     <Layout>
 
-      {/* add */}
-      <Sider
-        width={300}
-        style={{
-          overflow: 'auto',
-          height: '5vh',
-          position: 'fixed',
-          left: 0,
-          backgroundColor: '#fff',
-          borderRight: '1px solid #e8e8e8',
-          boxShadow: '0 0 10px rgba(0, 0, 0, 0.1)',
-          zIndex: '10',
-          padding: '0px',
-          margin: '0px',
-        }}
-      >
-        {/* Button to add ads */}
-        <Button
-          width={300}
-          type="primary"
-          onClick={() => setAddModalVisible(true)}
-          style={{
-            height: '4.97vh',
-            width: '100%',
-            borderRadius: '0px',
-            border: '0px',
-          }}
-        >
-          Add Your Advertisement
-        </Button>
+      <Add_ads_component
+        clickedLat={clickedLat}
+        clickedLng={clickedLng}
+        getData={getData}
+        setLocations={setLocations}
+      />
 
-        <Modal
-          title="Add Advertisement"
-          centered
-          visible={addModalVisible}
-          onOk={() => setAddModalVisible(false)}
-          onCancel={() => setAddModalVisible(false)}
-          footer={null}
-        >
-          <Form
-            form={form}
-            name="add_ads"
-            labelCol={{ span: 8 }}
-            wrapperCol={{ span: 16 }}
-            initialValues={{ remember: true }}
-            onFinish={onFinish}
-            onFinishFailed={onFinishFailed}
-            autoComplete="off"
-            style={
-              {
-                width: '100%',
-                height: '100%',
-              }
-            }
-          >
-            <Row align='center' style={
-              {
-                marginTop: '10px',
-                marginBottom: '20px',
-              }
-            }>
-              <Space size={'large'}>
-                <Button type='primary' ghost onClick={getCoordinatesFromClickedLocation}>
-                  Use Clicked Location
-                </Button>
-                <Button type='primary' ghost onClick={getCoordinatesFromCurrentLocation} loading={loading}>
-                  Use Current Location
-                </Button>
-              </Space>
-            </Row>
+      <Search_Component
+        getData={getData}
+        locations={locations}
+        setLocations={setLocations}
+        mapObject={mapObject}
+      />
 
-            <Form.Item
-              label="Lat"
-              name="lat"
-              rules={[
-                {
-                  required: true,
-                  message: 'Latitude Required',
-                },
-              ]}
-            >
-              <Input />
-            </Form.Item>
+      <Filter_Component
+        setLocations={setLocations}
+        resetMap={resetMap}
+      />
 
-            <Form.Item
-              label="Lng"
-              name="lng"
-              rules={[
-                {
-                  required: true,
-                  message: 'Longitude Required',
-                },
-              ]}
-            >
-              <Input />
-            </Form.Item>
-
-            <Form.Item
-              label="Sub-city"
-              name="sub_city"
-              rules={[
-                {
-                  required: true,
-                  message: 'Sub-city Required',
-                },
-              ]}
-            >
-              <Select style={{ width: '100%' }} >
-                <Option value="Addis Ketema">Addis Ketema</Option>
-                <Option value="Akaki Kaliti">Akaki Kaliti</Option>
-                <Option value="Arada">Arada</Option>
-                <Option value="Bole">Bole</Option>
-                <Option value="Gullele">Gullele</Option>
-                <Option value="Kirkos">Kirkos</Option>
-                <Option value="Kolfe Keranio">Kolfe Keranio</Option>
-                <Option value="Lideta">Lideta</Option>
-                <Option value="Nifas Silk Lafto">Nifas Silk Lafto</Option>
-                <Option value="Yeka">Yeka</Option>
-              </Select>
-            </Form.Item>
-
-            <Form.Item
-              label="Price"
-              name="price"
-              rules={[
-                {
-                  required: true,
-                  message: 'Price Required',
-                },
-              ]}
-            >
-              <InputNumber addonAfter="Birr" style={{ width: '100%' }} />
-            </Form.Item>
-
-            <Form.Item
-              label="Surface"
-              name="surface"
-              rules={[
-                {
-                  required: true,
-                  message: 'Surface Required',
-                },
-              ]}
-            >
-              <InputNumber addonAfter="m²" style={{ width: '100%' }} />
-            </Form.Item>
-
-            <Form.Item
-              label="Type"
-              name="type"
-              rules={[
-                {
-                  required: true,
-                  message: 'Type Required',
-                },
-              ]}
-            >
-              <Select style={{ width: '100%' }} >
-                <Option value="ground">Ground</Option>
-                <Option value="building">Building</Option>
-              </Select>
-            </Form.Item>
-
-            <Form.Item
-              label="Duration"
-              name="duration"
-              rules={[
-                {
-                  required: true,
-                  message: 'Duration Required',
-                },
-              ]}
-            >
-              <InputNumber addonAfter="Days" style={{ width: '100%' }} />
-            </Form.Item>
-
-            <Form.Item
-              label="Availability"
-              name="availability"
-              rules={[
-                {
-                  required: true,
-                  message: 'Availability Required',
-                },
-              ]}
-            >
-              <Select style={{ width: '100%' }} onChange={handleAvailability}>
-                <Option value="occupied">Occupied</Option>
-                <Option value="unoccupied">Unoccupied</Option>
-              </Select>
-            </Form.Item>
-
-            <Form.Item
-              label="Date"
-              name="date"
-              rules={[
-                {
-                  required: true,
-                  message: 'Date Required',
-                },
-              ]}
-            >
-              <RangePicker
-                disabled={isDateDisabled}
-                format="YYYY-MM-DD"
-                style={{ width: '100%' }}
-              />
-            </Form.Item>
-
-            <Form.Item wrapperCol={{ offset: 11, span: 16 }}>
-              <Button type="primary" htmlType="submit" loading={loading}>
-                Submit
-              </Button>
-            </Form.Item>
-
-          </Form>
-        </Modal>
-      </Sider>
-
-      {/* search */}
-      <Sider
-        width={300}
-        style={{
-          overflow: 'auto',
-          height: '35vh',
-          position: 'fixed',
-          top: '5vh',
-          left: 0,
-          backgroundColor: '#fff',
-          borderRight: '1px solid #e8e8e8',
-          boxShadow: '0 0 10px rgba(0, 0, 0, 0.1)',
-          zIndex: '10',
-          padding: '0px',
-          margin: '0px',
-        }}
-      >
-
-        {/* <Menu items={items} /> */}
-        <Search
-          placeholder="Search"
-          allowClear
-          enterButton
-          size="medium"
-          onChange={onSearchChange}
-          onSearch={onSearch}
-          loading={loading}
-        />
-
-        <List
-          size="medium"
-          dataSource={locations}
-          renderItem={location =>
-            <List.Item
-              className='clickable'
-              onClick={() => {
-
-                // go to the location
-                mapObject.flyTo({
-                  center: [location.longitude, location.latitude],
-                  zoom: 15,
-                  speed: 3,
-                  curve: 1,
-                  easing: function (t) {
-                    return t;
-                  }
-                });
-              }}
-            >{location.sub_city[0].toUpperCase() + location.sub_city.substring(1) + ' Sub-city' + ' (' + location.latitude + ', ' + location.longitude + ')'}
-            </List.Item>
-          }
-        />
-      </Sider>
-
-      {/* filters */}
-      <Sider
-        width={300}
-        style={{
-          overflow: 'auto',
-          height: '60vh',
-          position: 'fixed',
-          top: '40vh',
-          left: 0,
-          backgroundColor: '#fff',
-          borderRight: '1px solid #e8e8e8',
-          boxShadow: '0 0 10px rgba(0, 0, 0, 0.1)',
-          zIndex: '10',
-          padding: '0px',
-          margin: '0px',
-        }}
-      >
-        <Card
-          title="Filter Options"
-          bordered={false}
-          extra={
-            <Button type="primary" size="medium" ghost danger onClick={resetMap}>
-              Reset
-            </Button>
-          }>
-          <Collapse accordion>
-
-            <Panel header="Sub-city" key="1">
-              <Select style={{ width: '100%' }} onChange={filterBySubCity}>
-                <Option value="Addis Ketema">Addis Ketema</Option>
-                <Option value="Akaki Kaliti">Akaki Kaliti</Option>
-                <Option value="Arada">Arada</Option>
-                <Option value="Bole">Bole</Option>
-                <Option value="Gullele">Gullele</Option>
-                <Option value="Kirkos">Kirkos</Option>
-                <Option value="Kolfe Keranio">Kolfe Keranio</Option>
-                <Option value="Lideta">Lideta</Option>
-                <Option value="Nifas Silk Lafto">Nifas Silk Lafto</Option>
-                <Option value="Yeka">Yeka</Option>
-              </Select>
-            </Panel>
-
-            <Panel header="Price (Birr)" key="2">
-              <Input.Group >
-                <Row>
-                  {/* <Space direction='horizontal'> */}
-                  <Col span={12}>
-                    <InputNumber placeholder="Min" name='priceMin' value={priceMin} onChange={handlePriceMin} />
-                  </Col>
-                  <Col span={12}>
-                    <InputNumber placeholder="Max" name='priceMax' value={priceMax} onChange={handlePriceMax} />
-                  </Col>
-                  {/* </Space> */}
-                </Row>
-              </Input.Group>
-              <Slider
-                range={{ draggableTrack: true }}
-                defaultValue={[priceMin, priceMax]}
-                min={1}
-                max={1000000}
-                value={[priceMin, priceMax]}
-                onChange={handlePriceSlider}
-              />
-              <Row align='center'>
-                <Button type='primary' onClick={filterByPrice}>Apply</Button>
-              </Row>
-            </Panel>
-
-            <Panel header="Surface (m²)" key="3">
-              <Input.Group >
-                <Row>
-                  {/* <Space direction='horizontal'> */}
-                  <Col span={12}>
-                    <InputNumber placeholder="Min" name='surfaceMin' value={surfaceMin} onChange={handleSurfaceMin} />
-                  </Col>
-                  <Col span={12}>
-                    <InputNumber placeholder="Max" name='surfaceMax' value={surfaceMax} onChange={handleSurfaceMax} />
-                  </Col>
-                  {/* </Space> */}
-                </Row>
-              </Input.Group>
-              <Slider
-                range={{ draggableTrack: true }}
-                defaultValue={[surfaceMin, surfaceMax]}
-                min={1}
-                max={1000}
-                value={[surfaceMin, surfaceMax]}
-                onChange={handleSurfaceSlider}
-              />
-              <Row align='center'>
-                <Button type='primary' onClick={filterBySurface}>Apply</Button>
-              </Row>
-            </Panel>
-
-            <Panel header="Type" key="4">
-              <Select style={{ width: '100%' }} onChange={filterByType}>
-                <Option value="Ground">Ground</Option>
-                <Option value="Building">Building</Option>
-              </Select>
-            </Panel>
-
-            <Panel header="Duration (Days)" key="5">
-              <Input.Group >
-                <Row>
-                  {/* <Space direction='horizontal'> */}
-                  <Col span={12}>
-                    <InputNumber placeholder="Min" name='durationMin' value={durationMin} onChange={handleDurationMin} />
-                  </Col>
-                  <Col span={12}>
-                    <InputNumber placeholder="Max" name='durationMax' value={durationMax} onChange={handleDurationMax} />
-                  </Col>
-                  {/* </Space> */}
-                </Row>
-              </Input.Group>
-              <Slider
-                range={{ draggableTrack: true }}
-                defaultValue={[durationMin, durationMax]}
-                min={1}
-                max={100}
-                value={[durationMin, durationMax]}
-                onChange={handleDurationSlider}
-              />
-              <Row align='center'>
-                <Button type='primary' onClick={filterByDuration}>Apply</Button>
-              </Row>
-            </Panel>
-
-            <Panel header="Availability" key="6">
-              <Select style={{ width: '100%' }} onChange={filterByAvailability}>
-                <Option value="Occupied">Occupied</Option>
-                <Option value="Unoccupied">Unoccupied</Option>
-              </Select>
-            </Panel>
-
-          </Collapse>
-        </Card>
-
-
-      </Sider>
-
-      {/* map clicked location */}
-      {/* <Sider
-        width={300}
-        style={{
-          overflow: 'auto',
-          height: '3.5vh',
-          position: 'fixed',
-          top: '96.5vh',
-          left: 0,
-          backgroundColor: '#fff',
-          borderRight: '1px solid #e8e8e8',
-          boxShadow: '0 0 10px rgba(0, 0, 0, 0.1)',
-          zIndex: '10',
-          padding: '0px',
-          margin: '0px',
-        }}
-      >
-        <Input value={`Lng: ${clickedLng}, Lat: ${clickedLat}`} contentEditable={false} />
-      </Sider> */}
-
+      {/* map coordinates */}
       <Layout>
         {/* <Header
           style={{
@@ -897,7 +211,16 @@ export default function App() {
           Header
         </Header> */}
 
-        <Content>
+        <Content
+          style={{
+            padding: '0px',
+            margin: '0px',
+            background: '#fff',
+            height: '100vh',
+            overflow: 'hidden',
+            marginLeft: '330px',
+          }}
+        >
           <div>
             <div className="sidebar">
               Clicked Lat: {clickedLat} | Clicked Lng: {clickedLng}
