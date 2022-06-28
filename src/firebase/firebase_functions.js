@@ -7,13 +7,13 @@ import { firebaseConfig } from "./config";
 import {
     getFirestore,
     collection,
-    // getDocs,
+    getDocs,
     addDoc,
     // deleteDoc,
     // doc,
     // onSnapshot,
-    // query,
-    // where,
+    query,
+    where,
     serverTimestamp,
     // orderBy,
 
@@ -40,8 +40,7 @@ const addADS = async (
     type,
     duration,
     availability,
-    startDate,
-    endDate,
+    date,
 ) => {
     await addDoc(housesCollection, {
         latitude: lat,
@@ -52,8 +51,7 @@ const addADS = async (
         type: type,
         duration: duration,
         availability: availability,
-        startDate: startDate,
-        endDate: endDate,
+        date: date,
         createdAt: serverTimestamp(),
     }).then(() => {
         // log("Document successfully written!");
@@ -66,4 +64,56 @@ const addADS = async (
     );
 };
 
-export { addADS, housesCollection };
+async function getData({ setLocations }) {
+    const responses = await getDocs(housesCollection).then(data => {
+        let houses = [];
+        data.docs.forEach(doc => {
+            houses.push({ ...doc.data(), id: doc.id });
+        }
+        );
+        return houses;
+    }
+    ).catch(err => {
+        log(err);
+    }
+    );
+    setLocations(responses);
+    return responses;
+}
+
+const searchBySubCity = async ({value, setLoading, setLocations, info}) => {
+
+    // const responses = await fetch('https://api.mapbox.com/geocoding/v5/mapbox.places/' + value + '.json?access_token=pk.eyJ1IjoieGNhZ2U3IiwiYSI6ImNsNGlrbTc0bTBmajgzY3BmNHA1NDVwMmYifQ.SrIHjoAhw8wWViQsLfjmUQ')
+    //   .then(response => {
+    //     return response.json();
+    //   })
+
+    setLoading(true);
+
+    // get data from collection
+    const q = query(housesCollection, where('sub_city', '==', value.toLowerCase()));
+    const responses = await getDocs(q).then(data => {
+        let houses = [];
+        data.docs.forEach(doc => {
+            houses.push({ ...doc.data(), id: doc.id });
+        }
+        );
+        return houses;
+    }
+    ).catch(err => {
+        log(err);
+    }
+    );
+
+    if (responses.length === 0) {
+        setLoading(false);
+        info();
+        setLocations([]);
+    }
+    else {
+        setLocations(responses);
+        setLoading(false);
+    }
+};
+
+export { addADS, housesCollection, getData, searchBySubCity };
