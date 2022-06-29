@@ -167,6 +167,7 @@ export default function App() {
       />
 
       <Filter_Component
+        locations={locations}
         setLocations={setLocations}
       />
 

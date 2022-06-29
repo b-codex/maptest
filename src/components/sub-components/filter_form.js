@@ -4,7 +4,9 @@ import React, { useState } from 'react'
 import { getDocs, query, where } from 'firebase/firestore';
 import { housesCollection, getData } from '../../firebase/firebase_functions';
 
-const Filter_Form = ({ setLocations }) => {
+import { ArrowRightOutlined } from '@ant-design/icons';
+
+const Filter_Form = ({ locations, setLocations }) => {
     const log = console.log;
 
     const [loading, setLoading] = useState(false);
@@ -27,13 +29,13 @@ const Filter_Form = ({ setLocations }) => {
         const { priceMin, priceMax } = price;
         const { surfaceMin, surfaceMax } = surface;
         const { durationMin, durationMax } = duration;
-        
+
         // const query = housesCollection.where('price', '>=', priceMin).where('price', '<=', priceMax);
         // const query2 = housesCollection.where('surface', '>=', surfaceMin).where('surface', '<=', surfaceMax);
         // const query3 = housesCollection.where('duration', '>=', durationMin).where('duration', '<=', durationMax);
-        
 
-        
+
+
 
         log(values);
 
@@ -153,32 +155,116 @@ const Filter_Form = ({ setLocations }) => {
 
     const filterBySubCity = (value) => {
         // onFilter(value, 'sub_city');
+
+        // filter locations array by sub_city
+        const filteredLocations = locations.filter(location => {
+            return location.sub_city.toLowerCase() === value.toLowerCase();
+        }
+        );
+
+        // check if the filtered array is empty
+        if (filteredLocations.length === 0) {
+            info();
+        }
+        else {
+            setLocations(filteredLocations);
+        }
     }
 
     const filterByType = (value) => {
         // onFilter(value, 'type');
+
+        // filter locations array by type
+        const filteredLocations = locations.filter(location => {
+            return location.type.toLowerCase() === value.toLowerCase();
+        }
+        );
+
+        // check if the filtered array is empty
+        if (filteredLocations.length === 0) {
+            info();
+        }
+        else {
+            setLocations(filteredLocations);
+        }
     }
 
     const filterByAvailability = (value) => {
         // onFilter(value, 'availability');
+
+        // filter locations array by availability
+        const filteredLocations = locations.filter(location => {
+            return location.availability.toLowerCase() === value.toLowerCase();
+        }
+        );
+
+        // check if the filtered array is empty
+        if (filteredLocations.length === 0) {
+            info();
+        }
+        else {
+            setLocations(filteredLocations);
+        }
     }
 
     const filterByPrice = () => {
-        onFilterRange('price', priceMin, priceMax);
+        // onFilterRange('price', priceMin, priceMax);
+
+        // filter locations array by price
+        const filteredLocations = locations.filter(location => {
+            return location.price >= priceMin && location.price <= priceMax;
+        }
+        );
+
+        // check if the filtered array is empty
+        if (filteredLocations.length === 0) {
+            info();
+        }
+        else {
+            setLocations(filteredLocations);
+        }
     }
 
     const filterBySurface = () => {
-        onFilterRange('surface', surfaceMin, surfaceMax);
+        // onFilterRange('surface', surfaceMin, surfaceMax);
+
+        // filter locations array by surface
+        const filteredLocations = locations.filter(location => {
+            return location.surface >= surfaceMin && location.surface <= surfaceMax;
+        }
+        );
+
+        // check if the filtered array is empty
+        if (filteredLocations.length === 0) {
+            info();
+        }
+        else {
+            setLocations(filteredLocations);
+        }
     }
 
     const filterByDuration = () => {
-        onFilterRange('duration', durationMin, durationMax);
+        // onFilterRange('duration', durationMin, durationMax);
+
+        // filter locations array by duration
+        const filteredLocations = locations.filter(location => {
+            return location.duration >= durationMin && location.duration <= durationMax;
+        }
+        );
+
+        // check if the filtered array is empty
+        if (filteredLocations.length === 0) {
+            info();
+        }
+        else {
+            setLocations(filteredLocations);
+        }
     }
 
     //reset the search filters with a button
     const resetMap = () => {
         form.resetFields();
-        // getData({ setLocations });
+        getData({ setLocations });
     }
 
     return (
@@ -216,29 +302,30 @@ const Filter_Form = ({ setLocations }) => {
                     name="price"
                 >
                     <Input.Group >
-                        <Row
-                            style={{
-                                width: '100%',
-                            }}
-                        >
-                            <Col span={12}>
-                                <Form.Item
-                                    name={['price', 'priceMin']}
-                                    noStyle
-                                // initialValue={priceMin}
-                                >
-                                    <InputNumber placeholder="Min" name="priceMin" value={priceMin} onChange={handlePriceMin} />
-                                </Form.Item>
-                            </Col>
-                            <Col span={12}>
-                                <Form.Item
-                                    name={['price', 'priceMax']}
-                                    noStyle
-                                // initialValue={priceMax}
-                                >
-                                    <InputNumber placeholder="Max" name="priceMax" value={priceMax} onChange={handlePriceMax} />
-                                </Form.Item>
-                            </Col>
+                        <Row>
+                            <Space direction='horizontal' size={'large'}>
+                                <Col span={8}>
+                                    <Form.Item
+                                        name={['price', 'priceMin']}
+                                        noStyle
+                                    // initialValue={priceMin}
+                                    >
+                                        <InputNumber placeholder="Min" name="priceMin" value={priceMin} onChange={handlePriceMin} />
+                                    </Form.Item>
+                                </Col>
+                                <Col span={8}>
+                                    <Form.Item
+                                        name={['price', 'priceMax']}
+                                        noStyle
+                                    // initialValue={priceMax}
+                                    >
+                                        <InputNumber placeholder="Max" name="priceMax" value={priceMax} onChange={handlePriceMax} />
+                                    </Form.Item>
+                                </Col>
+                                <Col span={8}>
+                                    <Button type='primary' onClick={filterByPrice}><ArrowRightOutlined /></Button>
+                                </Col>
+                            </Space>
                         </Row>
                     </Input.Group>
                     {/* <Slider
@@ -249,9 +336,6 @@ const Filter_Form = ({ setLocations }) => {
                         value={[priceMin, priceMax]}
                         onChange={handlePriceSlider}
                     /> */}
-                    {/* <Row align='center'>
-                        <Button type='primary' onClick={filterByPrice}>Apply</Button>
-                    </Row> */}
                 </Form.Item>
 
                 <Divider />
@@ -262,24 +346,27 @@ const Filter_Form = ({ setLocations }) => {
                 >
                     <Input.Group >
                         <Row>
-                            {/* <Space direction='horizontal'> */}
-                            <Col span={12}>
-                                <Form.Item
-                                    name={['surface', 'surfaceMin']}
-                                    noStyle
-                                >
-                                    <InputNumber placeholder="Min" value={surfaceMin} onChange={handleSurfaceMin} />
-                                </Form.Item>
-                            </Col>
-                            <Col span={12}>
-                                <Form.Item
-                                    name={['surface', 'surfaceMax']}
-                                    noStyle
-                                >
-                                    <InputNumber placeholder="Max" value={surfaceMax} onChange={handleSurfaceMax} />
-                                </Form.Item>
-                            </Col>
-                            {/* </Space> */}
+                            <Space direction='horizontal' size={'large'}>
+                                <Col span={8}>
+                                    <Form.Item
+                                        name={['surface', 'surfaceMin']}
+                                        noStyle
+                                    >
+                                        <InputNumber placeholder="Min" value={surfaceMin} onChange={handleSurfaceMin} />
+                                    </Form.Item>
+                                </Col>
+                                <Col span={8}>
+                                    <Form.Item
+                                        name={['surface', 'surfaceMax']}
+                                        noStyle
+                                    >
+                                        <InputNumber placeholder="Max" value={surfaceMax} onChange={handleSurfaceMax} />
+                                    </Form.Item>
+                                </Col>
+                                <Col span={8}>
+                                    <Button type='primary' onClick={filterBySurface}><ArrowRightOutlined /></Button>
+                                </Col>
+                            </Space>
                         </Row>
                     </Input.Group>
                     {/* <Slider
@@ -290,9 +377,6 @@ const Filter_Form = ({ setLocations }) => {
                         value={[surfaceMin, surfaceMax]}
                         onChange={handleSurfaceSlider}
                     /> */}
-                    {/* <Row align='center'>
-                        <Button type='primary' onClick={filterBySurface}>Apply</Button>
-                    </Row> */}
                 </Form.Item>
 
                 <Divider />
@@ -303,24 +387,27 @@ const Filter_Form = ({ setLocations }) => {
                 >
                     <Input.Group >
                         <Row>
-                            {/* <Space direction='horizontal'> */}
-                            <Col span={12}>
-                                <Form.Item
-                                    name={['duration', 'durationMin']}
-                                    noStyle
-                                >
-                                    <InputNumber placeholder="Min" value={durationMin} onChange={handleDurationMin} />
-                                </Form.Item>
-                            </Col>
-                            <Col span={12}>
-                                <Form.Item
-                                    name={['duration', 'durationMax']}
-                                    noStyle
-                                >
-                                    <InputNumber placeholder="Max" value={durationMax} onChange={handleDurationMax} />
-                                </Form.Item>
-                            </Col>
-                            {/* </Space> */}
+                            <Space direction='horizontal' size={'large'}>
+                                <Col span={8}>
+                                    <Form.Item
+                                        name={['duration', 'durationMin']}
+                                        noStyle
+                                    >
+                                        <InputNumber placeholder="Min" value={durationMin} onChange={handleDurationMin} />
+                                    </Form.Item>
+                                </Col>
+                                <Col span={8}>
+                                    <Form.Item
+                                        name={['duration', 'durationMax']}
+                                        noStyle
+                                    >
+                                        <InputNumber placeholder="Max" value={durationMax} onChange={handleDurationMax} />
+                                    </Form.Item>
+                                </Col>
+                                <Col span={8}>
+                                    <Button type='primary' onClick={filterByDuration}><ArrowRightOutlined /></Button>
+                                </Col>
+                            </Space>
                         </Row>
                     </Input.Group>
                     {/* <Slider
@@ -331,9 +418,6 @@ const Filter_Form = ({ setLocations }) => {
                         value={[durationMin, durationMax]}
                         onChange={handleDurationSlider}
                     /> */}
-                    {/* <Row align='center'>
-                        <Button type='primary' onClick={filterByDuration}>Apply</Button>
-                    </Row> */}
                 </Form.Item>
 
                 <Divider />
@@ -368,11 +452,11 @@ const Filter_Form = ({ setLocations }) => {
                             direction='horizontal'
                             size='large'
                         >
-                            <Button type="primary" htmlType="submit" size='medium' loading={loading}>
+                            {/* <Button type="primary" htmlType="submit" size='medium' loading={loading}>
                                 Apply Filters
-                            </Button>
+                            </Button> */}
 
-                            <Button type="primary" size="medium" ghost danger onClick={resetMap}>
+                            <Button type="primary" size="medium" ghost danger onClick={resetMap} loading={loading}>
                                 Reset Filters
                             </Button>
                         </Space>

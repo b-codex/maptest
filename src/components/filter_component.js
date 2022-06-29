@@ -4,7 +4,7 @@ import { Layout, Card } from 'antd';
 
 import Filter_Form from './sub-components/filter_form';
 
-const Filter_Component = ({ setLocations }) => {
+const Filter_Component = ({ locations, setLocations }) => {
 
     const { Sider } = Layout;
 
@@ -37,7 +37,7 @@ const Filter_Component = ({ setLocations }) => {
                 // }
                 >
 
-                    <Filter_Form setLocations={setLocations} />
+                    <Filter_Form locations={locations} setLocations={setLocations} />
 
                 </Card>
 
