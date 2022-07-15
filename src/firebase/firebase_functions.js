@@ -30,8 +30,27 @@ const db = getFirestore();
 
 // get a reference to a specific collection
 const housesCollection = collection(db, "houses");
+const billboardsCollection = collection(db, "billboards");
+const others = collection(db, "others");
+const publicScreensCollection = collection(db, "public screens");
+const tvCollection = collection(db, "tv");
+const radiosCollection = collection(db, "radios");
+const SMICollection = collection(db, 'social media influencer');
+const mobilePlatformsCollection = collection(db, "mobile platforms");
+
+let allCollections = [
+    others,
+    // housesCollection,
+    billboardsCollection,
+    publicScreensCollection,
+    // tvCollection,
+    // radiosCollection,
+    SMICollection,
+    mobilePlatformsCollection,
+];
 
 const addADS = async (
+    category,
     lat,
     lng,
     sub_city,
@@ -65,23 +84,36 @@ const addADS = async (
 };
 
 async function getData({ setLocations }) {
-    const responses = await getDocs(housesCollection).then(data => {
-        let houses = [];
+    let results = [];
+
+    await getDocs(others).then(data => {
         data.docs.forEach(doc => {
-            houses.push({ ...doc.data(), id: doc.id });
+            results.push({ ...doc.data(), id: doc.id });
         }
         );
-        return houses;
     }
     ).catch(err => {
         log(err);
     }
     );
-    setLocations(responses);
-    return responses;
+
+
+    // const responses = await getDocs(housesCollection).then(data => {
+    //     data.docs.forEach(doc => {
+    //         houses.push({ ...doc.data(), id: doc.id });
+    //     }
+    //     );
+    //     return houses;
+    // }
+    // ).catch(err => {
+    //     log(err);
+    // }
+    // );
+    setLocations(results);
+    return results;
 }
 
-const searchBySubCity = async ({value, setLoading, setLocations, info}) => {
+const searchBySubCity = async ({ value, setLoading, setLocations, info }) => {
 
     // const responses = await fetch('https://api.mapbox.com/geocoding/v5/mapbox.places/' + value + '.json?access_token=pk.eyJ1IjoieGNhZ2U3IiwiYSI6ImNsNGlrbTc0bTBmajgzY3BmNHA1NDVwMmYifQ.SrIHjoAhw8wWViQsLfjmUQ')
     //   .then(response => {

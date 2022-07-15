@@ -94,6 +94,7 @@ export default function App() {
       // a popup will show with information about the marker
       var popup = new mapboxgl.Popup({ offset: 25, closeOnClick: true, closeButton: false })
         .setHTML(
+          '<p> Category: ' + location.category[0].toUpperCase() + location.category.substring(1) + '</p>' +
           '<p> Sub-city: ' + location.sub_city[0].toUpperCase() + location.sub_city.substring(1) + '</p>' +
           '<p> Price: ' + location.price + ' Birr</p>' +
           '<p> Surface: ' + location.surface + ' m²</p>' +
